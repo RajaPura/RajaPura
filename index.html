@@ -81,6 +81,25 @@ tfoot td{border-top:1px solid var(--gold-dim);border-bottom:none;font-weight:600
 .step-num{width:24px;height:24px;border-radius:50%;background:var(--gold-dim);color:var(--gold);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
 .step-text{font-size:13px;color:var(--muted);line-height:1.6;}
 .step-text a{color:var(--gold);}
+
+/* HOME */
+.home-screen{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;}
+.home-logo{font-family:'Cormorant Garamond',serif;font-size:14px;letter-spacing:6px;color:var(--gold-dim);text-transform:uppercase;margin-bottom:8px;}
+.home-title{font-family:'Cormorant Garamond',serif;font-size:48px;color:var(--cream);margin-bottom:8px;text-align:center;}
+.home-sub{font-size:13px;color:var(--muted);margin-bottom:60px;letter-spacing:1px;}
+.home-btns{display:grid;grid-template-columns:1fr 1fr;gap:20px;width:100%;max-width:600px;}
+.home-btn{padding:40px 20px;border-radius:18px;border:1px solid;background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .3s;display:flex;flex-direction:column;align-items:center;gap:14px;text-decoration:none;}
+.home-btn:hover{transform:translateY(-4px);}
+.home-btn-icon{font-size:40px;}
+.home-btn-title{font-family:'Cormorant Garamond',serif;font-size:22px;}
+.home-btn-sub{font-size:12px;color:var(--muted);}
+.home-btn.vendas{border-color:var(--gold);background:rgba(200,145,58,.05);}
+.home-btn.vendas:hover{background:rgba(200,145,58,.12);}
+.home-btn.limpezas{border-color:var(--silves);background:rgba(110,158,96,.05);}
+.home-btn.limpezas:hover{background:rgba(110,158,96,.12);}
+.home-back{position:fixed;top:20px;left:20px;z-index:600;padding:8px 16px;background:transparent;border:1px solid var(--surface3);border-radius:8px;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;display:none;}
+@media(max-width:500px){.home-btns{grid-template-columns:1fr;}.home-title{font-size:36px;}}
+
 /* LIMPEZAS */
 .limp-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;}
 .limp-input{width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--surface3);border-radius:10px;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;}
@@ -122,7 +141,28 @@ tfoot td{border-top:1px solid var(--gold-dim);border-bottom:none;font-weight:600
 </style>
 </head>
 <body>
-<div style="position:relative;z-index:1">
+
+<!-- HOME SCREEN -->
+<div id="homeScreen" class="home-screen">
+  <div class="home-logo">Gestão Interna</div>
+  <div class="home-title">Raja Pura</div>
+  <div class="home-sub">Seleciona uma área</div>
+  <div class="home-btns">
+    <button class="home-btn vendas" onclick="goTo('vendas')">
+      <div class="home-btn-icon">📊</div>
+      <div class="home-btn-title" style="color:var(--gold)">Vendas da Equipa</div>
+      <div class="home-btn-sub">Dashboard · Equipa · Tabela Mensal</div>
+    </button>
+    <button class="home-btn limpezas" onclick="goTo('limpezas')">
+      <div class="home-btn-icon">🧹</div>
+      <div class="home-btn-title" style="color:var(--silves-light)">Limpezas da Equipa</div>
+      <div class="home-btn-sub">Registar · Histórico · Avaliação</div>
+    </button>
+  </div>
+</div>
+<button class="home-back" id="homeBack" onclick="goHome()">← Início</button>
+
+<div style="position:relative;z-index:1;display:none" id="appContent">
 <!-- HEADER -->
 <div class="header">
   <div class="header-inner">
@@ -150,9 +190,9 @@ tfoot td{border-top:1px solid var(--gold-dim);border-bottom:none;font-weight:600
   <div id="tab-dashboard">
     <div class="kpis">
       <div class="kpi" style="border-color:rgba(200,145,58,.2)"><div class="kpi-label">Vendas Hoje</div><div class="kpi-value" id="kpiHoje" style="color:var(--gold)">&#8364;0,00</div><div class="kpi-sub" id="kpiHojeData">-</div></div>
-      <div class="kpi" style="border-color:rgba(229,176,90,.2)"><div class="kpi-label">Total do M&#234;s</div><div class="kpi-value" id="kpiMes" style="color:var(--gold-light)">&#8364;0,00</div><div class="kpi-sub" id="kpiRegs">0 registos</div></div>
-      <div class="kpi" style="border-color:rgba(200,145,58,.15)"><div class="kpi-label">Lagos</div><div class="kpi-value" id="kpiLagos" style="color:var(--lagos)">&#8364;0,00</div><div class="kpi-sub">Este m&#234;s</div></div>
-      <div class="kpi" style="border-color:rgba(110,158,96,.2)"><div class="kpi-label">Silves</div><div class="kpi-value" id="kpiSilves" style="color:var(--silves-light)">&#8364;0,00</div><div class="kpi-sub">Este m&#234;s</div></div>
+      <div class="kpi" style="border-color:rgba(229,176,90,.2)"><div class="kpi-label">Total do Mês</div><div class="kpi-value" id="kpiMes" style="color:var(--gold-light)">&#8364;0,00</div><div class="kpi-sub" id="kpiRegs">0 registos</div></div>
+      <div class="kpi" style="border-color:rgba(200,145,58,.15)"><div class="kpi-label">Lagos</div><div class="kpi-value" id="kpiLagos" style="color:var(--lagos)">&#8364;0,00</div><div class="kpi-sub">Este mês</div></div>
+      <div class="kpi" style="border-color:rgba(110,158,96,.2)"><div class="kpi-label">Silves</div><div class="kpi-value" id="kpiSilves" style="color:var(--silves-light)">&#8364;0,00</div><div class="kpi-sub">Este mês</div></div>
     </div>
     <div id="metaCard" class="meta-card" style="display:none">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -161,7 +201,7 @@ tfoot td{border-top:1px solid var(--gold-dim);border-bottom:none;font-weight:600
       </div>
       <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%;background:var(--gold)"></div></div>
       <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--muted)">
-        <span id="metaAlc">&#8364;0 alcan&#231;ados</span><span id="metaVal">Meta: &#8364;0</span>
+        <span id="metaAlc">&#8364;0 alcançados</span><span id="metaVal">Meta: &#8364;0</span>
       </div>
       <div style="font-size:12px;color:var(--gold-light);margin-top:6px" id="metaMiss"></div>
     </div>
@@ -186,18 +226,18 @@ tfoot td{border-top:1px solid var(--gold-dim);border-bottom:none;font-weight:600
   <div id="tab-limpezas" style="display:none">
     <div style="display:flex;gap:0;margin-bottom:24px;border-bottom:1px solid var(--surface3)">
       <button class="tab active" id="lsReg" onclick="switchLimpTab('registar')" style="padding:10px 16px;font-size:12px">Registar</button>
-      <button class="tab" id="lsHist" onclick="switchLimpTab('historico')" style="padding:10px 16px;font-size:12px">Hist&#243;rico</button>
-      <button class="tab" id="lsAval" onclick="switchLimpTab('avaliacao')" style="padding:10px 16px;font-size:12px">&#11088; Avalia&#231;&#227;o</button>
+      <button class="tab" id="lsHist" onclick="switchLimpTab('historico')" style="padding:10px 16px;font-size:12px">Histórico</button>
+      <button class="tab" id="lsAval" onclick="switchLimpTab('avaliacao')" style="padding:10px 16px;font-size:12px">&#11088; Avaliação</button>
     </div>
 
     <div id="limp-registar">
       <div class="rules-card">
         <div style="font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--gold);margin-bottom:12px">&#128203; Regras de Limpeza</div>
-        <div class="rule-item"><span style="color:var(--gold)">&#8226;</span>Mudar o saco do aspirador quando n&#227;o aspira bem</div>
-        <div class="rule-item"><span style="color:var(--gold)">&#8226;</span>A equipa da noite deve informar no grupo de WhatsApp o que &#233; necess&#225;rio rep&#244;r de manh&#227;</div>
+        <div class="rule-item"><span style="color:var(--gold)">&#8226;</span>Mudar o saco do aspirador quando não aspira bem</div>
+        <div class="rule-item"><span style="color:var(--gold)">&#8226;</span>A equipa da noite deve informar no grupo de WhatsApp o que é necessário repôr de manhã</div>
         <div class="rule-item"><span style="color:var(--gold)">&#8226;</span>O vidro da montra deve ser limpo 2x por semana</div>
-        <div class="rule-item"><span style="color:var(--gold)">&#8226;</span>Lavar os panos cada vez que s&#227;o utilizados</div>
-        <div class="rule-item"><span style="color:var(--gold)">&#8226;</span>Cada turno deve deixar o balc&#227;o limpo e organizado</div>
+        <div class="rule-item"><span style="color:var(--gold)">&#8226;</span>Lavar os panos cada vez que são utilizados</div>
+        <div class="rule-item"><span style="color:var(--gold)">&#8226;</span>Cada turno deve deixar o balcão limpo e organizado</div>
       </div>
       <div class="cards-grid" id="limpCards"></div>
     </div>
@@ -259,6 +299,44 @@ tfoot td{border-top:1px solid var(--gold-dim);border-bottom:none;font-weight:600
 <div class="toast" id="toast">&#10003; Guardado!</div>
 
 <script>
+
+// HOME NAVIGATION
+function goTo(area) {
+  document.getElementById('homeScreen').style.display = 'none';
+  document.getElementById('appContent').style.display = 'block';
+  document.getElementById('homeBack').style.display = 'block';
+  if (area === 'vendas') {
+    // Show vendas tabs, hide limpezas
+    document.getElementById('brandTitle').textContent = 'Vendas da Equipa';
+    // activate dashboard tab
+    var tabs = document.querySelectorAll('.tab');
+    tabs.forEach(function(t){ t.classList.remove('active'); });
+    // click first tab
+    switchTab('dashboard', document.querySelectorAll('.tab')[0]);
+    document.querySelectorAll('.tab')[0].classList.add('active');
+    // hide limpezas tab
+    document.querySelectorAll('.tab')[3].style.display = 'none';
+    document.querySelectorAll('.tab')[4].style.display = 'none';
+    renderDashboard(); renderEquipa();
+  } else {
+    // Show limpezas directly
+    document.getElementById('brandTitle').textContent = 'Limpezas da Equipa';
+    var tabs = document.querySelectorAll('.tab');
+    tabs.forEach(function(t){ t.classList.remove('active'); t.style.display = 'none'; });
+    switchTab('limpezas', {classList:{add:function(){},remove:function(){},toggle:function(){}}});
+    document.getElementById('tab-limpezas').style.display = '';
+    renderLimpCards();
+  }
+}
+
+function goHome() {
+  document.getElementById('homeScreen').style.display = 'flex';
+  document.getElementById('appContent').style.display = 'none';
+  document.getElementById('homeBack').style.display = 'none';
+  // reset tabs visibility
+  document.querySelectorAll('.tab').forEach(function(t){ t.style.display = ''; });
+}
+
 // CONFIG
 var COLABORADORES = {
   'Eduardo': {loja:'Lagos',turno:'Manha',color:'#C8913A',emoji:'&#128104;',campos:['loja']},
@@ -272,29 +350,29 @@ var CAMPO_LABELS = {loja:'Vendas Loja',shopify:'Vendas Shopify',instagram:'Insta
 // TAREFAS LIMPEZA
 var TURNOS_LIMP = {
   manha: {
-    label:'Turno da Manha', emoji:'&#127749;', color:'#E5B05A',
-    tarefas:['Limpar o po','Limpar espelhos','Fazer reposicao','Mudar manequins','Organizar os expositores conforme as pessoas vao vendo e desarrumando','Colocar os artigos juntos por modelos e cores','Balcao limpo e organizado'],
+    label:'Turno da Manhã', emoji:'&#127749;', color:'#E5B05A',
+    tarefas:['Limpar o pó','Limpar espelhos','Fazer reposição','Mudar manequins','Organizar os expositores conforme as pessoas vão vendo e desarrumando','Colocar os artigos juntos por modelos e cores','Balcão limpo e organizado'],
     campos:['nomeManha','dataManha'],
     obsId:'obsManha', nomeId:'nomeManha', dataId:'dataManha'
   },
   tarde: {
     label:'Turno Tarde/Noite', emoji:'&#127769;', color:'#7AAAD5',
-    tarefas:['Aspirar e lavar o chao','Limpar WC','Lixos','Organizar expositores','Organizar expositores conforme clientes mexem','Atencao para modelos estarem juntos','Balcao limpo e organizado'],
+    tarefas:['Aspirar e lavar o chão','Limpar WC','Lixos','Organizar expositores','Organizar expositores conforme os clientes mexem','Atenção para os modelos estarem juntos','Balcão limpo e organizado'],
     nomeId:'nameTarde', dataId:'dataTarde', obsId:'obsTarde'
   },
   catarina: {
     label:'Catarina', emoji:'&#128105;', color:'#8DC47A',
-    tarefas:['Aspirar o andar de cima','Lavar o chao','Limpar o po (2x por semana)','Levar o lixo'],
+    tarefas:['Aspirar o andar de cima','Lavar o chão','Limpar o pó (2x por semana)','Levar o lixo'],
     dataId:'dataCatarina', obsId:'obsCatarina'
   },
   joana: {
     label:'Joana', emoji:'&#128105;', color:'#C8913A',
-    tarefas:['Limpar o po','Limpar espelhos','Fazer reposicao','Mudar manequins','Organizar expositores','Colocar cabides sempre iguais','Colocar os artigos juntos por modelos e suas cores','Deixar o balcao limpo e organizado','Levar o lixo','Limpar vidros da montra e refazer 1x por semana','Aspirar e lavar antes de sair','Limpar o WC'],
+    tarefas:['Limpar o pó','Limpar espelhos','Fazer reposição','Mudar manequins','Organizar expositores','Colocar cabides sempre iguais','Colocar os artigos juntos por modelos e suas cores','Deixar o balcão limpo e organizado','Levar o lixo','Limpar vidros da montra e refazer 1x por semana','Aspirar e lavar antes de sair','Limpar o WC'],
     dataId:'dataJoana', obsId:'obsJoana'
   },
   patricia: {
     label:'Patricia', emoji:'&#128105;', color:'#6E9E60',
-    tarefas:['Limpar o po','Limpar espelhos','Fazer reposicao','Mudar manequins','Organizar expositores','Colocar cabides sempre iguais','Colocar os artigos juntos por modelos e suas cores','Deixar o balcao limpo e organizado','Levar o lixo','Limpar vidros da montra e refazer 1x por semana','Aspirar e lavar antes de sair','Limpar o WC'],
+    tarefas:['Limpar o pó','Limpar espelhos','Fazer reposição','Mudar manequins','Organizar expositores','Colocar cabides sempre iguais','Colocar os artigos juntos por modelos e suas cores','Deixar o balcão limpo e organizado','Levar o lixo','Limpar vidros da montra e refazer 1x por semana','Aspirar e lavar antes de sair','Limpar o WC'],
     dataId:'dataPatricia', obsId:'obsPatricia'
   }
 };
@@ -365,7 +443,7 @@ function switchTab(tab,btn) {
   });
   document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active');});
   btn.classList.add('active');
-  var titles={dashboard:'Vendas da Equipa',equipa:'Vendas da Equipa',tabela:'Vendas da Equipa',limpezas:'Limpezas da Equipa',config:'Configuracoes'};
+  var titles={dashboard:'Vendas da Equipa',equipa:'Vendas da Equipa',tabela:'Vendas da Equipa',limpezas:'Limpezas da Equipa',config:'Configurações'};
   document.getElementById('brandTitle').textContent=titles[tab]||'Raja Pura';
   if(tab==='tabela') renderTabela();
   if(tab==='limpezas') renderLimpCards();
@@ -391,7 +469,7 @@ function renderDashboard() {
     document.getElementById('metaPct').textContent=p+'%';
     document.getElementById('progressFill').style.width=p+'%';
     document.getElementById('progressFill').style.background=p>=100?'var(--silves)':'var(--gold)';
-    document.getElementById('metaAlc').textContent=fmt(tMes)+' alcancados';
+    document.getElementById('metaAlc').textContent=fmt(tMes)+' alcançados';
     document.getElementById('metaVal').textContent='Meta: '+fmt(meta);
     document.getElementById('metaMiss').textContent=meta-tMes>0?'Faltam '+fmt(meta-tMes):'Meta atingida!';
   } else {mc.style.display='none';}
@@ -412,7 +490,7 @@ function renderEquipa() {
     var recs=registos.filter(function(r){return r.nome===nome;});
     var tMes=recs.reduce(function(s,r){return s+Number(r.total||0);},0);
     var hoje=recs.filter(function(r){return r.data===todayStr();}).reduce(function(s,r){return s+Number(r.total||0);},0);
-    return '<div class="collab-card" style="border-color:'+col.color+'33"><div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div style="width:36px;height:36px;border-radius:50%;background:'+col.color+'18;border:1.5px solid '+col.color+';display:flex;align-items:center;justify-content:center;font-size:16px">'+col.emoji+'</div><div><div style="font-family:Cormorant Garamond,serif;font-size:15px;color:var(--cream)">'+nome+'</div><div style="font-size:11px;color:var(--muted)">'+col.turno+'</div></div></div><div style="margin-bottom:8px"><div style="font-size:11px;color:var(--muted)">Hoje</div><div style="font-family:Cormorant Garamond,serif;font-size:22px;color:'+col.color+'">'+fmt(hoje)+'</div></div><div style="display:flex;justify-content:space-between;margin-bottom:14px"><div><div style="font-size:11px;color:var(--muted)">Total mes</div><div style="font-size:15px;color:var(--cream);font-weight:600">'+fmt(tMes)+'</div></div></div><button onclick="openModal(\''+nome+'\')" style="width:100%;padding:9px;border-radius:9px;border:1px solid '+col.color+'55;background:'+col.color+'18;color:'+col.color+';cursor:pointer;font-size:13px;font-weight:600;font-family:DM Sans,sans-serif">+ Registar Vendas</button></div>';
+    return '<div class="collab-card" style="border-color:'+col.color+'33"><div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div style="width:36px;height:36px;border-radius:50%;background:'+col.color+'18;border:1.5px solid '+col.color+';display:flex;align-items:center;justify-content:center;font-size:16px">'+col.emoji+'</div><div><div style="font-family:Cormorant Garamond,serif;font-size:15px;color:var(--cream)">'+nome+'</div><div style="font-size:11px;color:var(--muted)">'+col.turno+'</div></div></div><div style="margin-bottom:8px"><div style="font-size:11px;color:var(--muted)">Hoje</div><div style="font-family:Cormorant Garamond,serif;font-size:22px;color:'+col.color+'">'+fmt(hoje)+'</div></div><div style="display:flex;justify-content:space-between;margin-bottom:14px"><div><div style="font-size:11px;color:var(--muted)">Total mês</div><div style="font-size:15px;color:var(--cream);font-weight:600">'+fmt(tMes)+'</div></div></div><button onclick="openModal(\''+nome+'\')" style="width:100%;padding:9px;border-radius:9px;border:1px solid '+col.color+'55;background:'+col.color+'18;color:'+col.color+';cursor:pointer;font-size:13px;font-weight:600;font-family:DM Sans,sans-serif">+ Registar Vendas</button></div>';
   }).join('');
 }
 
@@ -437,10 +515,10 @@ function renderTabela() {
       html+='<td style="text-align:right;color:'+lc+';font-family:Cormorant Garamond,serif;font-size:15px;font-weight:600">'+fmt(td)+'</td></tr>';
     });}
     var tl=lr.reduce(function(s,r){return s+Number(r.total||0);},0);
-    html+='</tbody><tfoot><tr><td style="color:var(--muted);font-size:12px">Total mes</td>'+colab.map(function(c){var t=registos.filter(function(r){return r.nome===c;}).reduce(function(s,r){return s+Number(r.total||0);},0);return '<td style="text-align:right;color:'+COLABORADORES[c].color+'">'+fmt(t)+'</td>';}).join('')+'<td style="text-align:right;color:'+lc+';font-family:Cormorant Garamond,serif;font-size:16px">'+fmt(tl)+'</td></tr></tfoot></table></div></div>';
+    html+='</tbody><tfoot><tr><td style="color:var(--muted);font-size:12px">Total mês</td>'+colab.map(function(c){var t=registos.filter(function(r){return r.nome===c;}).reduce(function(s,r){return s+Number(r.total||0);},0);return '<td style="text-align:right;color:'+COLABORADORES[c].color+'">'+fmt(t)+'</td>';}).join('')+'<td style="text-align:right;color:'+lc+';font-family:Cormorant Garamond,serif;font-size:16px">'+fmt(tl)+'</td></tr></tfoot></table></div></div>';
   });
   var tg=totalGeral();
-  html+='<div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Loja</th><th style="text-align:right">Total Mes</th></tr></thead><tbody>'+Object.keys(COLABORADORES).map(function(nome){var col=COLABORADORES[nome];var t=registos.filter(function(r){return r.nome===nome;}).reduce(function(s,r){return s+Number(r.total||0);},0);var lc=col.loja==='Lagos'?'var(--lagos)':'var(--silves-light)';return '<tr><td style="color:var(--cream)">'+nome+'</td><td><span style="font-size:11px;padding:3px 10px;border-radius:99px;background:'+(col.loja==='Lagos'?'rgba(200,145,58,.12)':'rgba(110,158,96,.12)')+';color:'+lc+'">'+col.loja+'</span></td><td style="text-align:right;color:'+col.color+';font-family:Cormorant Garamond,serif;font-size:16px">'+fmt(t)+'</td></tr>';}).join('')+'</tbody><tfoot><tr><td colspan="2" style="color:var(--gold);font-family:Cormorant Garamond,serif">Total Geral</td><td style="text-align:right;color:var(--gold);font-family:Cormorant Garamond,serif;font-size:18px">'+fmt(tg)+'</td></tr>'+(meta>0?'<tr><td colspan="2" style="color:var(--muted);font-size:12px">Meta mensal</td><td style="text-align:right;color:var(--muted);font-size:12px">'+fmt(meta)+'</td></tr>':'')+'</tfoot></table></div>';
+  html+='<div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Loja</th><th style="text-align:right">Total Mês</th></tr></thead><tbody>'+Object.keys(COLABORADORES).map(function(nome){var col=COLABORADORES[nome];var t=registos.filter(function(r){return r.nome===nome;}).reduce(function(s,r){return s+Number(r.total||0);},0);var lc=col.loja==='Lagos'?'var(--lagos)':'var(--silves-light)';return '<tr><td style="color:var(--cream)">'+nome+'</td><td><span style="font-size:11px;padding:3px 10px;border-radius:99px;background:'+(col.loja==='Lagos'?'rgba(200,145,58,.12)':'rgba(110,158,96,.12)')+';color:'+lc+'">'+col.loja+'</span></td><td style="text-align:right;color:'+col.color+';font-family:Cormorant Garamond,serif;font-size:16px">'+fmt(t)+'</td></tr>';}).join('')+'</tbody><tfoot><tr><td colspan="2" style="color:var(--gold);font-family:Cormorant Garamond,serif">Total Geral</td><td style="text-align:right;color:var(--gold);font-family:Cormorant Garamond,serif;font-size:18px">'+fmt(tg)+'</td></tr>'+(meta>0?'<tr><td colspan="2" style="color:var(--muted);font-size:12px">Meta mensal</td><td style="text-align:right;color:var(--muted);font-size:12px">'+fmt(meta)+'</td></tr>':'')+'</tfoot></table></div>';
   container.innerHTML=html;
 }
 
@@ -513,12 +591,12 @@ function renderLimpCards(){
       '<div><div class="limp-form-name">'+t.label+'</div>' +
       (reg?'<div class="limp-form-meta" style="color:'+t.color+'">'+done+'/'+tot+' tarefas &#183; '+p+'%</div>':'<div class="limp-form-meta">Por registar</div>') +
       '</div></div>' +
-      (hasNome?'<div style="margin-bottom:12px"><label class="limp-label">Nome do Funcionario</label><input class="limp-input" type="text" id="nome_'+key+'" placeholder="Ex: '+(key==='manha'?'Eduardo':'Zelia')+'" value="'+(reg?reg.nome:'')+'" /></div>':'')+
+      (hasNome?'<div style="margin-bottom:12px"><label class="limp-label">Nome do Funcionário</label><input class="limp-input" type="text" id="nome_'+key+'" placeholder="Ex: '+(key==='manha'?'Eduardo':'Zelia')+'" value="'+(reg?reg.nome:'')+'" /></div>':'')+
       '<div style="margin-bottom:12px"><label class="limp-label">Data</label><input class="limp-input" type="date" id="data_'+key+'" value="'+(reg?reg.data:today)+'" /></div>'+
       '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span class="limp-label" style="margin-bottom:0">Tarefas</span><span style="font-size:12px;color:'+t.color+'" id="cnt_'+key+'">'+done+'/'+tot+'</span></div>'+
       '<div class="limp-progress-row"><div class="limp-progress-track"><div class="limp-progress-fill" id="prg_'+key+'" style="width:'+p+'%;background:'+t.color+'"></div></div><div class="limp-progress-pct" id="pct_'+key+'" style="color:'+t.color+'">'+p+'%</div></div></div>'+
       '<div id="tasks_'+key+'"></div>'+
-      '<label class="limp-label" style="margin-top:10px">Observacoes</label>'+
+      '<label class="limp-label" style="margin-top:10px">Observações</label>'+
       '<textarea class="limp-obs" id="obs_'+key+'" placeholder="Notas do turno...">'+(reg?reg.obs:'')+'</textarea>'+
       '<button class="limp-btn" style="background:'+t.color+';color:#0C0906" onclick="limpGuardar(\''+key+'\')">&#10003; Guardar</button>'+
       '</div>';
@@ -625,7 +703,7 @@ function renderLimpHist(){
       '<div class="limp-hist-table"><table style="width:100%;border-collapse:collapse;font-size:13px">'+
       '<thead><tr style="background:var(--surface2);border-bottom:1px solid var(--surface3)">'+
       '<th style="padding:10px 14px;color:var(--muted);font-weight:500;font-size:11px;text-align:left">Turno</th>'+
-      '<th style="padding:10px 14px;color:var(--muted);font-weight:500;font-size:11px;text-align:left">Funcionario</th>'+
+      '<th style="padding:10px 14px;color:var(--muted);font-weight:500;font-size:11px;text-align:left">Funcionário</th>'+
       '<th style="padding:10px 14px;color:var(--muted);font-weight:500;font-size:11px;text-align:left">Tarefas</th>'+
       '<th style="padding:10px 14px;color:var(--muted);font-weight:500;font-size:11px;text-align:left">Nota</th>'+
       '</tr></thead><tbody>'+
@@ -670,7 +748,7 @@ function renderLimpAval(){
       '<div><div style="font-family:Cormorant Garamond,serif;font-size:17px;color:var(--cream)">'+t.label+'</div>'+
       '<div style="font-size:11px;color:var(--muted)">'+mes+'</div></div></div>'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
-      '<span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Nota do Mes</span>'+
+      '<span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Nota do Mês</span>'+
       '<span style="font-family:Cormorant Garamond,serif;font-size:26px;color:'+nc+'">'+(totalDias>0?mediaNota+'%':'--')+'</span></div>'+
       '<div style="background:var(--surface3);border-radius:99px;height:6px;overflow:hidden;margin-bottom:16px">'+
       '<div style="width:'+mediaNota+'%;height:100%;background:'+nc+';border-radius:99px"></div></div>'+
@@ -680,10 +758,10 @@ function renderLimpAval(){
       '<div style="background:var(--surface2);border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--muted);margin-bottom:3px">Falhas</div><div style="font-size:18px;font-family:Cormorant Garamond,serif;color:'+(falhas>0?'#C44A2A':'#8DC47A')+'">'+falhas+'</div></div>'+
       '</div>'+
       '<div style="background:var(--surface2);border-radius:10px;padding:14px;border:1px solid '+t.color+'22">'+
-      '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Comissao</div>'+
+      '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Comissão</div>'+
       '<div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:12px;color:var(--muted)">Base</span><span style="font-size:12px;color:var(--cream)">1%</span></div>'+
       '<div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:12px;color:var(--muted)">Qualitativa</span><span style="font-size:12px;color:'+(qc>0?'#8DC47A':'#C44A2A')+'">'+(totalDias>0?qc+'%':'-')+'</span></div>'+
-      '<div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="font-size:12px;color:var(--muted)">Bonus Meta</span><span style="font-size:12px;color:'+(metaAt?'#8DC47A':'var(--muted)')+'">'+bm+'%</span></div>'+
+      '<div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="font-size:12px;color:var(--muted)">Bónus Meta</span><span style="font-size:12px;color:'+(metaAt?'#8DC47A':'var(--muted)')+'">'+bm+'%</span></div>'+
       '<div style="border-top:1px solid '+t.color+'33;padding-top:10px;display:flex;justify-content:space-between;align-items:center">'+
       '<span style="font-size:12px;color:var(--muted)">Total</span>'+
       '<span style="font-family:Cormorant Garamond,serif;font-size:22px;color:'+t.color+'">'+(totalDias>0?tc+'%':'--')+'</span>'+
