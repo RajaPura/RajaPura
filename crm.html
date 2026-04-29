@@ -281,6 +281,18 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
             <label class="form-label">Data Primeiro Contacto</label>
             <input class="form-input" id="fData" type="date">
           </div>
+          <div class="form-group">
+            <label class="form-label">Registado por</label>
+            <select class="form-select" id="fRegistadoPor">
+              <option value="">Selecionar...</option>
+              <option value="Eduardo">Eduardo</option>
+              <option value="Zélia">Zélia</option>
+              <option value="Catarina">Catarina</option>
+              <option value="Joana">Joana</option>
+              <option value="Patrícia">Patrícia</option>
+              <option value="Vera">Vera</option>
+            </select>
+          </div>
         </div>
         <div class="form-grid full" style="margin-top:14px">
           <div class="form-group">
@@ -381,6 +393,7 @@ function nivelBadge(nivel) {
 // INIT
 window.onload = function() {
   document.getElementById('fData').value = todayStr();
+  document.getElementById('fRegistadoPor').value = '';
   renderStats();
   renderLista();
   fetchFromSheets();
@@ -510,7 +523,7 @@ function openDetail(id) {
     (c.email?'<span class="detail-meta-item">✉ '+c.email+'</span>':'')+
     (c.pais?'<span class="detail-meta-item">'+c.pais+'</span>':'')+
     (c.canal?'<span class="detail-meta-item">🏷 '+c.canal+'</span>':'')+
-    (c.dataPrimeiro?'<span class="detail-meta-item">📅 desde '+c.dataPrimeiro+'</span>':'')+
+    (c.dataPrimeiro?'<span class="detail-meta-item">📅 desde '+c.dataPrimeiro+'</span>':'')+(c.registadoPor?'<span class="detail-meta-item">👤 '+c.registadoPor+'</span>':'')+
     '</div></div>' +
     '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px">' +
     nivelBadge(niv) +
@@ -532,6 +545,7 @@ function openDetail(id) {
     infoRow('Pontos', (c.pontos||0)+' pts') +
     infoRow('Nº Compras', compras.length + (compras.length > 0 && compras.length % 5 === 0 ? ' 🎉 -15%' : ' (' + (5 - compras.length%5) + ' para desconto)')) +
     infoRow('Total Gasto', fmt(total)) +
+    (c.registadoPor?infoRow('Registado por', c.registadoPor):'') +
     '</div>';
 
   if(c.notas) {
@@ -607,6 +621,7 @@ function openEditCliente(id) {
   document.getElementById('fNivel').value = c.nivel||'Bronze';
   document.getElementById('fPontos').value = c.pontos||'';
   document.getElementById('fData').value = c.dataPrimeiro||todayStr();
+  document.getElementById('fRegistadoPor').value = c.registadoPor||'';
   document.getElementById('fNotas').value = c.notas||'';
   renderComprasForm();
   document.getElementById('clienteModal').style.display = 'flex';
@@ -733,6 +748,7 @@ function saveCliente() {
     nivel: document.getElementById('fNivel').value || getNivel(total),
     pontos: Number(document.getElementById('fPontos').value||0),
     dataPrimeiro: document.getElementById('fData').value,
+    registadoPor: document.getElementById('fRegistadoPor').value,
     notas: document.getElementById('fNotas').value.trim(),
     compras: comprasTemp.filter(function(p){return p.valor;}),
     updatedAt: new Date().toISOString()
