@@ -584,32 +584,55 @@ function removeCompra(idx) {
 
 function renderComprasForm() {
   var html = '';
-  comprasTemp.forEach(function(p,i){
+  comprasTemp.forEach(function(p, i) {
+    if(!p.items || !p.items.length) p.items = [{referencia:'', descricao:''}];
+    var itemsHtml = p.items.map(function(item, j) {
+      return '<div style="display:grid;grid-template-columns:110px 1fr auto;gap:8px;margin-bottom:6px;align-items:center">' +
+        '<input class="form-input" type="text" value="' + (item.referencia||'') + '" placeholder="Ref. RP-001" style="font-size:12px;padding:7px 10px" oninput="comprasTemp[' + i + '].items[' + j + '].referencia=this.value">' +
+        '<input class="form-input" type="text" value="' + (item.descricao||'') + '" placeholder="Descrição do artigo" style="font-size:12px;padding:7px 10px" oninput="comprasTemp[' + i + '].items[' + j + '].descricao=this.value">' +
+        (p.items.length > 1 ? '<button onclick="removeItem(' + i + ',' + j + ')" style="width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:transparent;cursor:pointer;color:var(--muted);font-size:12px">✕</button>' : '<div style="width:26px"></div>') +
+        '</div>';
+    }).join('');
+
     html += '<div class="compra-item">' +
-      '<div class="compra-header"><span class="compra-num">Compra '+(i+1)+'</span>' +
-      '<button class="compra-delete" onclick="removeCompra('+i+')">✕</button></div>' +
+      '<div class="compra-header">' +
+      '<span class="compra-num">Compra ' + (i+1) + '</span>' +
+      '<button class="compra-delete" onclick="removeCompra(' + i + ')">✕</button>' +
+      '</div>' +
       '<div class="compra-grid">' +
       '<div class="form-group"><label class="form-label">Data</label>' +
-      '<input class="form-input" type="date" value="'+(p.data||todayStr())+'" onchange="updateCompra('+i+',\'data\',this.value)"></div>' +
+      '<input class="form-input" type="date" value="' + (p.data||todayStr()) + '" onchange="comprasTemp[' + i + '].data=this.value"></div>' +
       '<div class="form-group"><label class="form-label">Canal</label>' +
-      '<select class="form-select" onchange="updateCompra('+i+',\'canal\',this.value)">' +
-      ['','Loja Lagos','Loja Silves','Online','Instagram','WhatsApp'].map(function(c){
-        return '<option value="'+c+'"'+(p.canal===c?' selected':'')+'>'+( c||'Selecionar...')+'</option>';
+      '<select class="form-select" onchange="comprasTemp[' + i + '].canal=this.value">' +
+      ['', 'Loja Lagos', 'Loja Silves', 'Online', 'Instagram', 'WhatsApp'].map(function(c) {
+        return '<option value="' + c + '"' + (p.canal===c?' selected':'') + '>' + (c||'Selecionar...') + '</option>';
       }).join('') +
       '</select></div>' +
-      '<div class="form-group"><label class="form-label">Valor (€)</label>' +
-      '<input class="form-input" type="number" min="0" step="0.01" value="'+(p.valor||'')+'" placeholder="0.00" onchange="updateCompra('+i+',\'valor\',this.value)"></div>' +
+      '<div class="form-group"><label class="form-label">Valor Total (€)</label>' +
+      '<input class="form-input" type="number" min="0" step="0.01" value="' + (p.valor||'') + '" placeholder="0.00" oninput="comprasTemp[' + i + '].valor=this.value"></div>' +
       '</div>' +
       '<div style="margin-top:10px">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
-      '<label class="form-label" style="margin-bottom:0">Artigos</label>' +
-      '<button onclick="addItemCompra('+i+')" style="font-size:11px;padding:3px 10px;border:1px solid var(--gold-dim);border-radius:6px;background:transparent;color:var(--gold);cursor:pointer">+ Artigo</button>' +
+      '<label class="form-label" style="margin-bottom:0">Artigos comprados</label>' +
+      '<button onclick="addItem(' + i + ')" style="font-size:11px;padding:3px 12px;border:1px solid var(--gold-dim);border-radius:6px;background:transparent;color:var(--gold);cursor:pointer;font-family:DM Sans,sans-serif">+ Artigo</button>' +
       '</div>' +
-      renderItemsCompra(i, p) +
+      itemsHtml +
       '</div>' +
       '</div>';
   });
   document.getElementById('comprasForm').innerHTML = html;
+}
+
+function addItem(i) {
+  if(!comprasTemp[i].items) comprasTemp[i].items = [];
+  comprasTemp[i].items.push({referencia:'', descricao:''});
+  renderComprasForm();
+}
+
+function removeItem(i, j) {
+  comprasTemp[i].items.splice(j, 1);
+  if(!comprasTemp[i].items.length) comprasTemp[i].items = [{referencia:'', descricao:''}];
+  renderComprasForm();
 }
 
 function updateCompra(idx, field, value) {
