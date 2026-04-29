@@ -154,7 +154,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
         <button class="tab" onclick="switchView('stats',this)">Estatísticas</button>
       </div>
     </div>
-    <div class="header-actions">
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><div id="crmConn" style="font-size:11px;color:#B8782A;padding-bottom:4px">● A ligar...</div><div class="header-actions">
       <button class="btn-secondary" onclick="exportCSV()">↓ Exportar</button>
       <button class="btn-primary" onclick="openNovoCliente()">+ Novo Cliente</button>
     </div>
@@ -310,9 +310,54 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 var clientes = [];
 var editingId = null;
 var comprasTemp = [];
+var scriptUrl = 'https://script.google.com/macros/s/AKfycbz0s1O9FBlighyTKVp-rrnv8fLTIwBca_J026CM0HG3AEM1YNiKVOJZA6GllMkJuqsT/exec';
+var syncing = false;
 
+// Load from localStorage first, then sync with Sheets
 try { clientes = JSON.parse(localStorage.getItem('rp_crm') || '[]'); } catch(e) { clientes = []; }
-function saveClientes() { try { localStorage.setItem('rp_crm', JSON.stringify(clientes)); } catch(e) {} }
+
+function saveClientes() {
+  try { localStorage.setItem('rp_crm', JSON.stringify(clientes)); } catch(e) {}
+}
+
+function setConnStatus(msg, color) {
+  var el = document.getElementById('crmConn');
+  if(el) { el.textContent = msg; el.style.color = color || '#4A7A4A'; }
+}
+
+async function fetchFromSheets() {
+  setConnStatus('● A sincronizar...', '#B8782A');
+  try {
+    var res = await fetch(scriptUrl + '?action=get');
+    var data = await res.json();
+    if(data.clientes && data.clientes.length >= 0) {
+      clientes = data.clientes;
+      saveClientes();
+      setConnStatus('● Ligado ao Google Sheets · ' + clientes.length + ' clientes', '#4A7A4A');
+      renderLista();
+      renderStats();
+    }
+  } catch(e) {
+    setConnStatus('● A funcionar offline', '#8A3A2A');
+  }
+}
+
+async function syncCliente(cliente) {
+  try {
+    await fetch(scriptUrl, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'save', cliente: cliente })
+    });
+  } catch(e) {
+    console.log('Sync failed, saved locally');
+  }
+}
+
+async function syncDelete(id) {
+  try {
+    await fetch(scriptUrl + '?action=delete&id=' + id);
+  } catch(e) { console.log('Delete sync failed'); }
+}
 
 function todayStr() { return new Date().toISOString().split('T')[0]; }
 function fmt(v) { return '€' + Number(v||0).toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2}); }
@@ -338,6 +383,7 @@ window.onload = function() {
   document.getElementById('fData').value = todayStr();
   renderStats();
   renderLista();
+  fetchFromSheets();
 };
 
 function switchView(view, btn) {
@@ -701,6 +747,7 @@ function saveCliente() {
   }
 
   saveClientes();
+  syncCliente(data);
   closeModal();
   renderLista();
   showToast('✓ Cliente guardado com sucesso!');
@@ -714,8 +761,10 @@ function saveCliente() {
 function deleteCliente() {
   if(!editingId) return;
   if(!confirm('Tens a certeza que queres eliminar este cliente?')) return;
-  clientes = clientes.filter(function(c){return c.id!==editingId;});
+  var delId = editingId;
+  clientes = clientes.filter(function(c){return c.id!==delId;});
   saveClientes();
+  syncDelete(delId);
   closeModal();
   backToLista();
   showToast('Cliente eliminado');
