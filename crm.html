@@ -508,8 +508,7 @@ function openDetail(id) {
     compras.slice().sort(function(a,b){return (b.data||'').localeCompare(a.data||'');}).forEach(function(p){
       html += '<div class="compra-card">' +
         '<div class="compra-card-header"><span class="compra-canal">'+(p.canal||'—')+'</span><span class="compra-data">'+(p.data||'')+'</span></div>' +
-        (p.referencia?'<div style="display:inline-block;background:var(--gold-pale);color:var(--gold);font-size:10px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:4px;margin-bottom:5px">'+p.referencia+'</div><br>':'') +
-        (p.descricao?'<div class="compra-desc">'+p.descricao+'</div>':'') +
+        ((p.items&&p.items.length)?p.items.map(function(it){return (it.referencia?'<span style="display:inline-block;background:var(--gold-pale);color:var(--gold);font-size:10px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:4px;margin-right:4px;margin-bottom:4px">'+it.referencia+'</span>':'')+( it.descricao?'<div class="compra-desc" style="margin-bottom:3px">'+it.descricao+'</div>':'');}).join(''):(p.descricao?'<div class="compra-desc">'+p.descricao+'</div>':'')) +
         '<div class="compra-valor">'+fmt(p.valor)+'</div>' +
         '</div>';
     });
@@ -547,7 +546,11 @@ function openEditCliente(id) {
   var c = clientes.find(function(x){return x.id===id;});
   if(!c) return;
   editingId = id;
-  comprasTemp = (c.compras||[]).map(function(p){return Object.assign({},p);});
+  comprasTemp = (c.compras||[]).map(function(p){
+    var c2 = Object.assign({},p);
+    if(!c2.items) c2.items = [{referencia:c2.referencia||'', descricao:c2.descricao||''}];
+    return c2;
+  });
   document.getElementById('modalTitle').textContent = 'Editar Cliente';
   document.getElementById('btnDelete').style.display = 'block';
   document.getElementById('fTelefone').value = c.telefone||'';
@@ -597,11 +600,12 @@ function renderComprasForm() {
       '<div class="form-group"><label class="form-label">Valor (€)</label>' +
       '<input class="form-input" type="number" min="0" step="0.01" value="'+(p.valor||'')+'" placeholder="0.00" onchange="updateCompra('+i+',\'valor\',this.value)"></div>' +
       '</div>' +
-      '<div class="compra-grid" style="margin-top:8px;grid-template-columns:1fr 2fr">' +
-      '<div class="form-group"><label class="form-label">Referência</label>' +
-      '<input class="form-input" type="text" value="'+(p.referencia||'')+'" placeholder="Ex: RP-001" onchange="updateCompra('+i+',\'referencia\',this.value)"></div>' +
-      '<div class="form-group"><label class="form-label">Descrição do Artigo</label>' +
-      '<input class="form-input" type="text" value="'+(p.descricao||'')+'" placeholder="Ex: Vestido Agni, tamanho M, cor azul" onchange="updateCompra('+i+',\'descricao\',this.value)"></div>' +
+      '<div style="margin-top:10px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+      '<label class="form-label" style="margin-bottom:0">Artigos</label>' +
+      '<button onclick="addItemCompra('+i+')" style="font-size:11px;padding:3px 10px;border:1px solid var(--gold-dim);border-radius:6px;background:transparent;color:var(--gold);cursor:pointer">+ Artigo</button>' +
+      '</div>' +
+      renderItemsCompra(i, p) +
       '</div>' +
       '</div>';
   });
@@ -610,6 +614,35 @@ function renderComprasForm() {
 
 function updateCompra(idx, field, value) {
   if(comprasTemp[idx]) comprasTemp[idx][field] = value;
+}
+
+
+function renderItemsCompra(compraIdx, p) {
+  var items = p.items || [{referencia:'', descricao:''}];
+  if(!p.items) p.items = items;
+  return items.map(function(item, itemIdx) {
+    return '<div style="display:grid;grid-template-columns:120px 1fr auto;gap:8px;margin-bottom:6px;align-items:center">' +
+      '<input class="form-input" type="text" value="'+(item.referencia||'')+'" placeholder="Ref. ex: RP-001" style="font-size:12px;padding:7px 10px" onchange="updateItem('+compraIdx+','+itemIdx+',\'referencia\',this.value)">' +
+      '<input class="form-input" type="text" value="'+(item.descricao||'')+'" placeholder="Descrição do artigo" style="font-size:12px;padding:7px 10px" onchange="updateItem('+compraIdx+','+itemIdx+',\'descricao\',this.value)">' +
+      (items.length > 1 ? '<button onclick="removeItem('+compraIdx+','+itemIdx+')" style="width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:transparent;cursor:pointer;color:var(--muted);font-size:12px;flex-shrink:0">✕</button>' : '<div style="width:26px"></div>') +
+      '</div>';
+  }).join('');
+}
+
+function addItemCompra(compraIdx) {
+  if(!comprasTemp[compraIdx].items) comprasTemp[compraIdx].items = [{referencia:'',descricao:''}];
+  comprasTemp[compraIdx].items.push({referencia:'', descricao:''});
+  renderComprasForm();
+}
+
+function removeItem(compraIdx, itemIdx) {
+  comprasTemp[compraIdx].items.splice(itemIdx, 1);
+  renderComprasForm();
+}
+
+function updateItem(compraIdx, itemIdx, field, value) {
+  if(!comprasTemp[compraIdx].items) comprasTemp[compraIdx].items = [{referencia:'',descricao:''}];
+  comprasTemp[compraIdx].items[itemIdx][field] = value;
 }
 
 function saveCliente() {
