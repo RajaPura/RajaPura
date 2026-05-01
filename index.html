@@ -346,6 +346,7 @@ var COLABORADORES = {
   'Patricia':{loja:'Silves',turno:'Loja',color:'#6E9E60',emoji:'&#128105;',campos:['loja']}
 };
 var CAMPO_LABELS = {loja:'Vendas Loja',shopify:'Vendas Shopify',instagram:'Instagram/Facebook',whatsapp:'WhatsApp',etsy:'Etsy'};
+var MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 // TAREFAS LIMPEZA
 var TURNOS_LIMP = {
@@ -462,7 +463,7 @@ function renderDashboard() {
   var tMes=registosMes.reduce(function(s,r){return s+Number(r.total||0);},0);
   var tLagos=registosMes.filter(function(r){return COLABORADORES[r.nome]&&COLABORADORES[r.nome].loja==='Lagos';}).reduce(function(s,r){return s+Number(r.total||0);},0);
   var tSilves=registosMes.filter(function(r){return COLABORADORES[r.nome]&&COLABORADORES[r.nome].loja==='Silves';}).reduce(function(s,r){return s+Number(r.total||0);},0);
-  var mesNome = meses[parseInt(mes.split('-')[1])-1]+' '+mes.split('-')[0];
+  var mesNome = MESES[parseInt(mes.split('-')[1])-1]+' '+mes.split('-')[0];
   document.getElementById('kpiHoje').textContent=fmt(tHoje);
   document.getElementById('kpiHojeData').textContent=today;
   document.getElementById('kpiMes').textContent=fmt(tMes);
@@ -524,9 +525,8 @@ function renderTabela() {
   var container=document.getElementById('tabelaContent');
   var html='';
   var mes=mesAtual();
-  var meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  var mesNome=meses[parseInt(mes.split('-')[1])-1]+' '+mes.split('-')[0];
-  function fmtDate(d){if(!d)return'-';var p=d.split('-');return p[2]+' '+meses[parseInt(p[1])-1]+' '+p[0];}
+  var mesNome=MESES[parseInt(mes.split('-')[1])-1]+' '+mes.split('-')[0];
+  function fmtDate(d){if(!d)return'-';var p=d.split('-');return p[2]+' '+MESES[parseInt(p[1])-1]+' '+p[0];}
   ['Lagos','Silves'].forEach(function(loja){
     var lc=loja==='Lagos'?'var(--lagos)':'var(--silves-light)';
     var colab=Object.keys(COLABORADORES).filter(function(k){return COLABORADORES[k].loja===loja;});
