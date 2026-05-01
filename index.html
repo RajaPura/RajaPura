@@ -345,7 +345,7 @@ var COLABORADORES = {
   'Joana':   {loja:'Silves',turno:'Loja',color:'#8DC47A',emoji:'&#128105;',campos:['loja']},
   'Patricia':{loja:'Silves',turno:'Loja',color:'#6E9E60',emoji:'&#128105;',campos:['loja']}
 };
-var CAMPO_LABELS = {loja:'Vendas Loja',shopify:'Vendas Shopify',instagram:'Instagram/Facebook',whatsapp:'WhatsApp'};
+var CAMPO_LABELS = {loja:'Vendas Loja',shopify:'Vendas Shopify',instagram:'Instagram/Facebook',whatsapp:'WhatsApp',etsy:'Etsy'};
 
 // TAREFAS LIMPEZA
 var TURNOS_LIMP = {
@@ -389,7 +389,11 @@ var limpChecked = {};
 function todayStr() { return new Date().toISOString().split('T')[0]; }
 function fmt(v) { return '\u20ac' + Number(v||0).toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function pct(v,t) { return t>0?Math.min(100,Math.round((v/t)*100)):0; }
-function totalGeral() { return registos.reduce(function(s,r){return s+Number(r.total||0);},0); }
+function mesAtual() { return new Date().toISOString().substring(0,7); }
+function totalGeral() { 
+  var mes = mesAtual();
+  return registos.filter(function(r){ return r.data && r.data.substring(0,7) === mes; }).reduce(function(s,r){return s+Number(r.total||0);},0); 
+}
 function showToast(msg) {
   var t=document.getElementById('toast');
   t.textContent = msg||'\u2713 Guardado!';
@@ -452,10 +456,13 @@ function switchTab(tab,btn) {
 // DASHBOARD
 function renderDashboard() {
   var today=todayStr();
-  var tHoje=registos.filter(function(r){return r.data===today;}).reduce(function(s,r){return s+Number(r.total||0);},0);
-  var tMes=totalGeral();
-  var tLagos=registos.filter(function(r){return COLABORADORES[r.nome]&&COLABORADORES[r.nome].loja==='Lagos';}).reduce(function(s,r){return s+Number(r.total||0);},0);
-  var tSilves=registos.filter(function(r){return COLABORADORES[r.nome]&&COLABORADORES[r.nome].loja==='Silves';}).reduce(function(s,r){return s+Number(r.total||0);},0);
+  var mes=mesAtual();
+  var registosMes=registos.filter(function(r){return r.data&&r.data.substring(0,7)===mes;});
+  var tHoje=registosMes.filter(function(r){return r.data===today;}).reduce(function(s,r){return s+Number(r.total||0);},0);
+  var tMes=registosMes.reduce(function(s,r){return s+Number(r.total||0);},0);
+  var tLagos=registosMes.filter(function(r){return COLABORADORES[r.nome]&&COLABORADORES[r.nome].loja==='Lagos';}).reduce(function(s,r){return s+Number(r.total||0);},0);
+  var tSilves=registosMes.filter(function(r){return COLABORADORES[r.nome]&&COLABORADORES[r.nome].loja==='Silves';}).reduce(function(s,r){return s+Number(r.total||0);},0);
+  var mesNome = meses[parseInt(mes.split('-')[1])-1]+' '+mes.split('-')[0];
   document.getElementById('kpiHoje').textContent=fmt(tHoje);
   document.getElementById('kpiHojeData').textContent=today;
   document.getElementById('kpiMes').textContent=fmt(tMes);
@@ -471,12 +478,29 @@ function renderDashboard() {
     document.getElementById('progressFill').style.background=p>=100?'var(--silves)':'var(--gold)';
     document.getElementById('metaAlc').textContent=fmt(tMes)+' alcançados';
     document.getElementById('metaVal').textContent='Meta: '+fmt(meta);
-    document.getElementById('metaMiss').textContent=meta-tMes>0?'Faltam '+fmt(meta-tMes):'Meta atingida!';
+    var falta = meta - tMes;
+  document.getElementById('metaMiss').textContent = falta>0 ? 'Faltam '+fmt(falta)+' para atingir a meta' : '&#127881; Meta atingida!';
+  
+  // Comissao card
+  var commCard = document.getElementById('comissaoCard');
+  if(commCard) {
+    if(falta <= 0 && meta > 0) {
+      // Meta atingida — mostrar comissao
+      commCard.style.display = '';
+      var comissao3 = tMes * 0.03;
+      document.getElementById('comissaoValor').textContent = fmt(comissao3);
+      document.getElementById('comissaoBase').textContent = fmt(tMes * 0.01);
+      document.getElementById('comissaoQual').textContent = '(+ 1% qualitativo por colaborador)';
+      document.getElementById('comissaoMes').textContent = mesNome || mesAtual();
+    } else {
+      commCard.style.display = 'none';
+    }
+  }
   } else {mc.style.display='none';}
   var maxH=Math.max(tHoje,1);
   document.getElementById('todayCollabs').innerHTML=Object.keys(COLABORADORES).map(function(nome){
     var col=COLABORADORES[nome];
-    var v=registos.filter(function(r){return r.nome===nome&&r.data===today;}).reduce(function(s,r){return s+Number(r.total||0);},0);
+    var v=registosMes.filter(function(r){return r.nome===nome&&r.data===today;}).reduce(function(s,r){return s+Number(r.total||0);},0);
     var p=Math.min(100,Math.round((v/maxH)*100));
     return '<div class="collab-row"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div><span style="font-size:13px;color:var(--cream)">'+nome+'</span><span style="font-size:11px;color:var(--muted);margin-left:6px">'+col.loja+'</span></div><span style="font-size:13px;font-weight:600;color:'+col.color+'">'+fmt(v)+'</span></div><div class="bar-track"><div class="bar-fill" style="width:'+p+'%;background:'+col.color+'"></div></div></div>';
   }).join('');
@@ -485,9 +509,10 @@ function renderDashboard() {
 // EQUIPA
 function renderEquipa() {
   var grid=document.getElementById('equipaGrid');
+  var mes=mesAtual();
   grid.innerHTML=Object.keys(COLABORADORES).map(function(nome){
     var col=COLABORADORES[nome];
-    var recs=registos.filter(function(r){return r.nome===nome;});
+    var recs=registos.filter(function(r){return r.nome===nome&&r.data&&r.data.substring(0,7)===mes;});
     var tMes=recs.reduce(function(s,r){return s+Number(r.total||0);},0);
     var hoje=recs.filter(function(r){return r.data===todayStr();}).reduce(function(s,r){return s+Number(r.total||0);},0);
     return '<div class="collab-card" style="border-color:'+col.color+'33"><div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div style="width:36px;height:36px;border-radius:50%;background:'+col.color+'18;border:1.5px solid '+col.color+';display:flex;align-items:center;justify-content:center;font-size:16px">'+col.emoji+'</div><div><div style="font-family:Cormorant Garamond,serif;font-size:15px;color:var(--cream)">'+nome+'</div><div style="font-size:11px;color:var(--muted)">'+col.turno+'</div></div></div><div style="margin-bottom:8px"><div style="font-size:11px;color:var(--muted)">Hoje</div><div style="font-family:Cormorant Garamond,serif;font-size:22px;color:'+col.color+'">'+fmt(hoje)+'</div></div><div style="display:flex;justify-content:space-between;margin-bottom:14px"><div><div style="font-size:11px;color:var(--muted)">Total mês</div><div style="font-size:15px;color:var(--cream);font-weight:600">'+fmt(tMes)+'</div></div></div><button onclick="openModal(\''+nome+'\')" style="width:100%;padding:9px;border-radius:9px;border:1px solid '+col.color+'55;background:'+col.color+'18;color:'+col.color+';cursor:pointer;font-size:13px;font-weight:600;font-family:DM Sans,sans-serif">+ Registar Vendas</button></div>';
@@ -498,12 +523,14 @@ function renderEquipa() {
 function renderTabela() {
   var container=document.getElementById('tabelaContent');
   var html='';
+  var mes=mesAtual();
   var meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  var mesNome=meses[parseInt(mes.split('-')[1])-1]+' '+mes.split('-')[0];
   function fmtDate(d){if(!d)return'-';var p=d.split('-');return p[2]+' '+meses[parseInt(p[1])-1]+' '+p[0];}
   ['Lagos','Silves'].forEach(function(loja){
     var lc=loja==='Lagos'?'var(--lagos)':'var(--silves-light)';
     var colab=Object.keys(COLABORADORES).filter(function(k){return COLABORADORES[k].loja===loja;});
-    var lr=registos.filter(function(r){return COLABORADORES[r.nome]&&COLABORADORES[r.nome].loja===loja;});
+    var lr=registos.filter(function(r){return COLABORADORES[r.nome]&&COLABORADORES[r.nome].loja===loja&&r.data&&r.data.substring(0,7)===mes;});
     var datas=[...new Set(lr.map(function(r){return r.data;}))].sort(function(a,b){return b.localeCompare(a);});
     html+='<div style="margin-bottom:28px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><div style="width:10px;height:10px;border-radius:50%;background:'+lc+'"></div><span style="font-family:Cormorant Garamond,serif;font-size:18px;color:var(--cream)">Loja de '+loja+'</span></div><div class="table-wrap"><table><thead><tr><th>Data</th>'+colab.map(function(c){return '<th style="text-align:right;color:'+COLABORADORES[c].color+'">'+c+'</th>';}).join('')+'<th style="text-align:right;color:'+lc+'">Total '+loja+'</th></tr></thead><tbody>';
     if(datas.length===0){html+='<tr><td colspan="'+(colab.length+2)+'" style="text-align:center;color:var(--muted);font-style:italic;padding:30px">Sem registos</td></tr>';}
@@ -518,7 +545,7 @@ function renderTabela() {
     html+='</tbody><tfoot><tr><td style="color:var(--muted);font-size:12px">Total mês</td>'+colab.map(function(c){var t=registos.filter(function(r){return r.nome===c;}).reduce(function(s,r){return s+Number(r.total||0);},0);return '<td style="text-align:right;color:'+COLABORADORES[c].color+'">'+fmt(t)+'</td>';}).join('')+'<td style="text-align:right;color:'+lc+';font-family:Cormorant Garamond,serif;font-size:16px">'+fmt(tl)+'</td></tr></tfoot></table></div></div>';
   });
   var tg=totalGeral();
-  html+='<div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Loja</th><th style="text-align:right">Total Mês</th></tr></thead><tbody>'+Object.keys(COLABORADORES).map(function(nome){var col=COLABORADORES[nome];var t=registos.filter(function(r){return r.nome===nome;}).reduce(function(s,r){return s+Number(r.total||0);},0);var lc=col.loja==='Lagos'?'var(--lagos)':'var(--silves-light)';return '<tr><td style="color:var(--cream)">'+nome+'</td><td><span style="font-size:11px;padding:3px 10px;border-radius:99px;background:'+(col.loja==='Lagos'?'rgba(200,145,58,.12)':'rgba(110,158,96,.12)')+';color:'+lc+'">'+col.loja+'</span></td><td style="text-align:right;color:'+col.color+';font-family:Cormorant Garamond,serif;font-size:16px">'+fmt(t)+'</td></tr>';}).join('')+'</tbody><tfoot><tr><td colspan="2" style="color:var(--gold);font-family:Cormorant Garamond,serif">Total Geral</td><td style="text-align:right;color:var(--gold);font-family:Cormorant Garamond,serif;font-size:18px">'+fmt(tg)+'</td></tr>'+(meta>0?'<tr><td colspan="2" style="color:var(--muted);font-size:12px">Meta mensal</td><td style="text-align:right;color:var(--muted);font-size:12px">'+fmt(meta)+'</td></tr>':'')+'</tfoot></table></div>';
+  html+='<div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Loja</th><th style="text-align:right">Total Mês</th></tr></thead><tbody>'+Object.keys(COLABORADORES).map(function(nome){var col=COLABORADORES[nome];var t=registos.filter(function(r){return r.nome===nome&&r.data&&r.data.substring(0,7)===mes;}).reduce(function(s,r){return s+Number(r.total||0);},0);var lc=col.loja==='Lagos'?'var(--lagos)':'var(--silves-light)';return '<tr><td style="color:var(--cream)">'+nome+'</td><td><span style="font-size:11px;padding:3px 10px;border-radius:99px;background:'+(col.loja==='Lagos'?'rgba(200,145,58,.12)':'rgba(110,158,96,.12)')+';color:'+lc+'">'+col.loja+'</span></td><td style="text-align:right;color:'+col.color+';font-family:Cormorant Garamond,serif;font-size:16px">'+fmt(t)+'</td></tr>';}).join('')+'</tbody><tfoot><tr><td colspan="2" style="color:var(--gold);font-family:Cormorant Garamond,serif">Total Geral</td><td style="text-align:right;color:var(--gold);font-family:Cormorant Garamond,serif;font-size:18px">'+fmt(tg)+'</td></tr>'+(meta>0?'<tr><td colspan="2" style="color:var(--muted);font-size:12px">Meta mensal</td><td style="text-align:right;color:var(--muted);font-size:12px">'+fmt(meta)+'</td></tr>':'')+'</tfoot></table></div>';
   container.innerHTML=html;
 }
 
@@ -768,6 +795,89 @@ function renderLimpAval(){
       '</div></div></div>';
   }).join('');
 }
+
+// DETAIL MODAL
+function openDetailModal(nome) {
+  var col = COLABORADORES[nome];
+  var today = todayStr();
+  var recs = registos.filter(function(r){ return r.nome === nome; });
+  var recsHoje = recs.filter(function(r){ return r.data === today; });
+  var totalMes = recs.reduce(function(s,r){ return s+Number(r.total||0); }, 0);
+  var totalHoje = recsHoje.reduce(function(s,r){ return s+Number(r.total||0); }, 0);
+
+  document.getElementById('detailModalTitle').innerHTML =
+    '<span style="font-size:18px;margin-right:8px">' + col.emoji + '</span>' + nome;
+
+  // Sum by canal for this month
+  var byCanalMes = {};
+  var byCanalHoje = {};
+  col.campos.forEach(function(c) {
+    byCanalMes[c] = recs.reduce(function(s,r){ return s+Number((r.valores&&r.valores[c])||0); }, 0);
+    byCanalHoje[c] = recsHoje.reduce(function(s,r){ return s+Number((r.valores&&r.valores[c])||0); }, 0);
+  });
+
+  var html = '';
+
+  // Today
+  html += '<div style="margin-bottom:20px">';
+  html += '<div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:10px">Hoje — ' + today + '</div>';
+  col.campos.forEach(function(c) {
+    var v = byCanalHoje[c] || 0;
+    var pct = totalHoje > 0 ? Math.round((v/totalHoje)*100) : 0;
+    html += '<div style="margin-bottom:10px">' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
+      '<span style="font-size:13px;color:var(--cream)">' + CAMPO_LABELS[c] + '</span>' +
+      '<span style="font-size:13px;font-weight:600;color:' + col.color + '">' + fmt(v) + '</span>' +
+      '</div>' +
+      '<div style="background:var(--surface3);border-radius:99px;height:4px;overflow:hidden">' +
+      '<div style="width:' + pct + '%;height:100%;background:' + col.color + ';border-radius:99px"></div>' +
+      '</div></div>';
+  });
+  html += '<div style="display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid var(--surface3);margin-top:6px">' +
+    '<span style="font-size:13px;color:var(--muted)">Total Hoje</span>' +
+    '<span style="font-family:Cormorant Garamond,serif;font-size:20px;color:' + col.color + '">' + fmt(totalHoje) + '</span></div>';
+  html += '</div>';
+
+  // This month
+  html += '<div>';
+  html += '<div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:10px">Este M&#234;s</div>';
+  col.campos.forEach(function(c) {
+    var v = byCanalMes[c] || 0;
+    var pct = totalMes > 0 ? Math.round((v/totalMes)*100) : 0;
+    html += '<div style="margin-bottom:10px">' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
+      '<span style="font-size:13px;color:var(--cream)">' + CAMPO_LABELS[c] + '</span>' +
+      '<span style="font-size:13px;font-weight:600;color:' + col.color + '">' + fmt(v) + '</span>' +
+      '</div>' +
+      '<div style="background:var(--surface3);border-radius:99px;height:4px;overflow:hidden">' +
+      '<div style="width:' + pct + '%;height:100%;background:' + col.color + ';border-radius:99px"></div>' +
+      '</div></div>';
+  });
+  html += '<div style="display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid var(--surface3);margin-top:6px">' +
+    '<span style="font-size:13px;color:var(--muted)">Total M&#234;s</span>' +
+    '<span style="font-family:Cormorant Garamond,serif;font-size:20px;color:' + col.color + '">' + fmt(totalMes) + '</span></div>';
+  html += '</div>';
+
+  document.getElementById('detailModalBody').innerHTML = html;
+  document.getElementById('detailModal').style.display = 'flex';
+}
+
+function closeDetailModal() {
+  document.getElementById('detailModal').style.display = 'none';
+}
+
 </script>
+
+<!-- DETAIL MODAL -->
+<div id="detailModal" style="position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;display:none;align-items:center;justify-content:center;padding:20px" onclick="if(event.target.id=='detailModal')closeDetailModal()">
+  <div style="background:var(--surface);border-radius:18px;width:100%;max-width:480px;border:1px solid var(--gold-dim);box-shadow:0 40px 80px rgba(0,0,0,.6);overflow:hidden">
+    <div style="padding:24px 28px 0;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div id="detailModalTitle" style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--cream)">Detalhe</div>
+      <button onclick="closeDetailModal()" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--surface3);background:transparent;cursor:pointer;font-size:16px;color:var(--muted)">✕</button>
+    </div>
+    <div id="detailModalBody" style="padding:0 28px 28px"></div>
+  </div>
+</div>
+
 </body>
 </html>
