@@ -510,14 +510,47 @@ function renderDashboard() {
 
 // EQUIPA
 function renderEquipa() {
-  var grid=document.getElementById('equipaGrid');
   var mes=mesAtual();
-  grid.innerHTML=Object.keys(COLABORADORES).map(function(nome){
+  var nomes = Object.keys(COLABORADORES);
+  // Store nomes globally for button access
+  window._equipaNomes = nomes;
+  document.getElementById('equipaGrid').innerHTML=nomes.map(function(nome, idx){
     var col=COLABORADORES[nome];
     var recs=registos.filter(function(r){return r.nome===nome&&r.data&&r.data.substring(0,7)===mes;});
-    var tMes=recs.reduce(function(s,r){return s+Number(r.total||0);},0);
-    var hoje=recs.filter(function(r){return r.data===todayStr();}).reduce(function(s,r){return s+Number(r.total||0);},0);
-    return '<div class="collab-card" style="border-color:'+col.color+'33"><div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div style="width:36px;height:36px;border-radius:50%;background:'+col.color+'18;border:1.5px solid '+col.color+';display:flex;align-items:center;justify-content:center;font-size:16px">'+col.emoji+'</div><div><div style="font-family:Cormorant Garamond,serif;font-size:15px;color:var(--cream)">'+nome+'</div><div style="font-size:11px;color:var(--muted)">'+col.turno+'</div></div></div><div style="margin-bottom:8px"><div style="font-size:11px;color:var(--muted)">Hoje</div><div style="font-family:Cormorant Garamond,serif;font-size:22px;color:'+col.color+'">'+fmt(hoje)+'</div></div><div style="display:flex;justify-content:space-between;margin-bottom:14px"><div><div style="font-size:11px;color:var(--muted)">Total mês</div><div style="font-size:15px;color:var(--cream);font-weight:600">'+fmt(tMes)+'</div></div></div><button onclick="openModal(\''+nome+'\')" style="width:100%;padding:9px;border-radius:9px;border:1px solid '+col.color+'55;background:'+col.color+'18;color:'+col.color+';cursor:pointer;font-size:13px;font-weight:600;font-family:DM Sans,sans-serif">+ Registar Vendas</button></div>';
+    var tM=recs.reduce(function(s,r){return s+Number(r.total||0);},0);
+    var hj=recs.filter(function(r){return r.data===todayStr();}).reduce(function(s,r){return s+Number(r.total||0);},0);
+
+    var breakdownHtml = '';
+    if(col.campos.length > 1) {
+      breakdownHtml = '<div style="margin-bottom:12px;padding:10px 12px;background:var(--surface2);border-radius:9px;border:1px solid var(--surface3)">' +
+        '<div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Este M&#234;s por Canal</div>' +
+        col.campos.map(function(c){
+          var v=recs.reduce(function(s,r){return s+Number((r.valores&&r.valores[c])||0);},0);
+          var pp=tM>0?Math.round((v/tM)*100):0;
+          return '<div style="margin-bottom:6px">' +
+            '<div style="display:flex;justify-content:space-between;margin-bottom:2px">' +
+            '<span style="font-size:11px;color:var(--muted)">'+CAMPO_LABELS[c]+'</span>' +
+            '<span style="font-size:11px;font-weight:600;color:'+col.color+'">'+fmt(v)+'</span>' +
+            '</div>' +
+            '<div style="background:var(--surface3);border-radius:99px;height:3px;overflow:hidden">' +
+            '<div style="width:'+pp+'%;height:100%;background:'+col.color+';border-radius:99px"></div>' +
+            '</div></div>';
+        }).join('') +
+        '</div>';
+    }
+
+    return '<div class="collab-card" style="border-color:'+col.color+'33">' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">' +
+      '<div style="width:36px;height:36px;border-radius:50%;background:'+col.color+'18;border:1.5px solid '+col.color+';display:flex;align-items:center;justify-content:center;font-size:16px">'+col.emoji+'</div>' +
+      '<div><div style="font-family:Cormorant Garamond,serif;font-size:15px;color:var(--cream)">'+nome+'</div>' +
+      '<div style="font-size:11px;color:var(--muted)">'+col.turno+'</div></div></div>' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:12px">' +
+      '<div><div style="font-size:11px;color:var(--muted)">Hoje</div><div style="font-family:Cormorant Garamond,serif;font-size:20px;color:'+col.color+'">'+fmt(hj)+'</div></div>' +
+      '<div style="text-align:right"><div style="font-size:11px;color:var(--muted)">Total M&#234;s</div><div style="font-family:Cormorant Garamond,serif;font-size:20px;color:var(--cream)">'+fmt(tM)+'</div></div>' +
+      '</div>' +
+      breakdownHtml +
+      '<button data-idx="'+idx+'" onclick="openEquipaModal(this)" style="width:100%;padding:9px;border-radius:9px;border:1px solid '+col.color+'55;background:'+col.color+'18;color:'+col.color+';cursor:pointer;font-size:13px;font-weight:600;font-family:DM Sans,sans-serif">+ Registar Vendas</button>' +
+      '</div>';
   }).join('');
 }
 
@@ -551,6 +584,12 @@ function renderTabela() {
 }
 
 // MODAL VENDAS
+
+function openEquipaModal(btn) {
+  var idx = parseInt(btn.getAttribute('data-idx'));
+  var nome = window._equipaNomes[idx];
+  openModal(nome);
+}
 function openModal(nome) {
   currentCollab=nome;
   var col=COLABORADORES[nome];
