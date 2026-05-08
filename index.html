@@ -224,6 +224,7 @@ tfoot td{border-top:1px solid var(--gold-dim);border-bottom:none;font-weight:600
 
   <!-- LIMPEZAS -->
   <div id="tab-limpezas" style="display:none">
+    <div id="limpSyncBar" style="font-size:11px;padding:8px 14px;border-radius:8px;margin-bottom:16px;border:1px solid rgba(200,145,58,.3);background:rgba(200,145,58,.1);color:var(--gold);display:flex;align-items:center;gap:8px">⟳ A carregar limpezas...</div>
     <div style="display:flex;gap:0;margin-bottom:24px;border-bottom:1px solid var(--surface3)">
       <button class="tab active" id="lsReg" onclick="switchLimpTab('registar')" style="padding:10px 16px;font-size:12px">Registar</button>
       <button class="tab" id="lsHist" onclick="switchLimpTab('historico')" style="padding:10px 16px;font-size:12px">Histórico</button>
@@ -542,7 +543,7 @@ function renderTabela() {
       html+='<td style="text-align:right;color:'+lc+';font-family:Cormorant Garamond,serif;font-size:15px;font-weight:600">'+fmt(td)+'</td></tr>';
     });}
     var tl=lr.reduce(function(s,r){return s+Number(r.total||0);},0);
-    html+='</tbody><tfoot><tr><td style="color:var(--muted);font-size:12px">Total mês</td>'+colab.map(function(c){var t=registos.filter(function(r){return r.nome===c;}).reduce(function(s,r){return s+Number(r.total||0);},0);return '<td style="text-align:right;color:'+COLABORADORES[c].color+'">'+fmt(t)+'</td>';}).join('')+'<td style="text-align:right;color:'+lc+';font-family:Cormorant Garamond,serif;font-size:16px">'+fmt(tl)+'</td></tr></tfoot></table></div></div>';
+    html+='</tbody><tfoot><tr><td style="color:var(--muted);font-size:12px">Total mês</td>'+colab.map(function(c){var t=lr.filter(function(r){return r.nome===c;}).reduce(function(s,r){return s+Number(r.total||0);},0);return '<td style="text-align:right;color:'+COLABORADORES[c].color+'">'+fmt(t)+'</td>';}).join('')+'<td style="text-align:right;color:'+lc+';font-family:Cormorant Garamond,serif;font-size:16px">'+fmt(tl)+'</td></tr></tfoot></table></div></div>';
   });
   var tg=totalGeral();
   html+='<div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Loja</th><th style="text-align:right">Total Mês</th></tr></thead><tbody>'+Object.keys(COLABORADORES).map(function(nome){var col=COLABORADORES[nome];var t=registos.filter(function(r){return r.nome===nome&&r.data&&r.data.substring(0,7)===mes;}).reduce(function(s,r){return s+Number(r.total||0);},0);var lc=col.loja==='Lagos'?'var(--lagos)':'var(--silves-light)';return '<tr><td style="color:var(--cream)">'+nome+'</td><td><span style="font-size:11px;padding:3px 10px;border-radius:99px;background:'+(col.loja==='Lagos'?'rgba(200,145,58,.12)':'rgba(110,158,96,.12)')+';color:'+lc+'">'+col.loja+'</span></td><td style="text-align:right;color:'+col.color+';font-family:Cormorant Garamond,serif;font-size:16px">'+fmt(t)+'</td></tr>';}).join('')+'</tbody><tfoot><tr><td colspan="2" style="color:var(--gold);font-family:Cormorant Garamond,serif">Total Geral</td><td style="text-align:right;color:var(--gold);font-family:Cormorant Garamond,serif;font-size:18px">'+fmt(tg)+'</td></tr>'+(meta>0?'<tr><td colspan="2" style="color:var(--muted);font-size:12px">Meta mensal</td><td style="text-align:right;color:var(--muted);font-size:12px">'+fmt(meta)+'</td></tr>':'')+'</tfoot></table></div>';
@@ -599,6 +600,53 @@ function updateMetaBtn(){document.getElementById('metaBtnText').textContent=meta
 function saveScriptUrl(){var url=document.getElementById('scriptUrlInput').value.trim();if(!url)return;scriptUrl=url;fetchRegistos();}
 
 // LIMPEZAS
+
+async function fetchLimpezas() {
+  try {
+    var res = await fetch(SHEETDB_LIMP);
+    var data = await res.json();
+    if(Array.isArray(data) && data.length > 0) {
+      limpezas = data.map(function(r) {
+        return {
+          id:r.id, turno:r.turno, nome:r.nome, data:r.data,
+          tarefas: typeof r.tarefas==='string' ? JSON.parse(r.tarefas||'[]') : (r.tarefas||[]),
+          pct:Number(r.pct||0), notaDia:Number(r.notaDia||0),
+          aviso:r.aviso||'', obs:r.obs||''
+        };
+      });
+      try{localStorage.setItem('rp_limpezas3',JSON.stringify(limpezas));}catch(e){}
+      var sb=document.getElementById('limpSyncBar');if(sb){sb.style.borderColor='rgba(90,158,90,.3)';sb.style.background='rgba(90,158,90,.1)';sb.style.color='#8DC47A';sb.textContent='✓ Ligado ao Google Sheets · '+limpezas.length+' registos de limpeza';}
+      renderLimpCards();
+      if(document.getElementById('limp-historico') && document.getElementById('limp-historico').style.display!=='none') renderLimpHist();
+    }
+  } catch(e) { var sb=document.getElementById('limpSyncBar');if(sb){sb.style.borderColor='rgba(196,74,42,.3)';sb.style.background='rgba(196,74,42,.1)';sb.style.color='#E07050';sb.textContent='⚠ Offline — a usar dados locais';} console.log('Limpezas offline:', e); }
+}
+
+async function syncLimpeza(reg) {
+  try {
+    // Delete old record for same turno+data
+    try {
+      await fetch(SHEETDB_LIMP+'/turno/'+encodeURIComponent(reg.turno), {
+        method:'DELETE',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({column:'data', value:reg.data})
+      });
+    } catch(e) {}
+    // Insert new
+    await fetch(SHEETDB_LIMP, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({data:{
+        id:reg.id, turno:reg.turno, nome:reg.nome||'', data:reg.data,
+        tarefas:JSON.stringify(reg.tarefas||[]),
+        pct:reg.pct||0, notaDia:reg.notaDia||0,
+        aviso:reg.aviso||'', obs:reg.obs||''
+      }})
+    });
+    console.log('Limpeza sincronizada com Google Sheets!');
+  } catch(e) { console.log('Sync limpeza falhou:', e); }
+}
+
 function saveLimpezas(){try{localStorage.setItem('rp_limpezas3',JSON.stringify(limpezas));}catch(e){}}
 
 function renderLimpCards(){
