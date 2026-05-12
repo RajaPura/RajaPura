@@ -325,6 +325,7 @@ function goTo(area) {
     tabs.forEach(function(t){ t.classList.remove('active'); t.style.display = 'none'; });
     switchTab('limpezas', {classList:{add:function(){},remove:function(){},toggle:function(){}}});
     document.getElementById('tab-limpezas').style.display = '';
+    fetchLimpezas();
     renderLimpCards();
   }
 }
