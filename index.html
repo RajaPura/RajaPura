@@ -660,20 +660,19 @@ async function fetchLimpezas() {
   setLimpSync('sync', '⟳ A carregar limpezas...');
   try {
     var res = await fetch(SHEETDB_LIMP + '?sheet=Limpezas');
+    if(!res.ok) throw new Error('HTTP ' + res.status);
     var data = await res.json();
-    var arr = Array.isArray(data) ? data : [];
-    limpezas = arr.map(function(r) {
+    limpezas = Array.isArray(data) ? data.map(function(r) {
       return {
         id: r.id, turno: r.turno, nome: r.nome, data: r.data,
         tarefas: typeof r.tarefas==='string' ? JSON.parse(r.tarefas||'[]') : (r.tarefas||[]),
         pct: Number(r.pct||0), notaDia: Number(r.notaDia||0),
         aviso: r.aviso||'', obs: r.obs||''
       };
-    });
+    }) : [];
     try { localStorage.setItem('rp_limpezas3', JSON.stringify(limpezas)); } catch(e) {}
     setLimpSync('ok', '✓ Ligado ao Google Sheets · ' + limpezas.length + ' registos de limpeza');
     renderLimpCards();
-    if(document.getElementById('limp-historico') && document.getElementById('limp-historico').style.display !== 'none') renderLimpHist();
   } catch(e) {
     console.log('Limpezas erro:', e);
     setLimpSync('err', '⚠ Offline — a usar dados locais');
