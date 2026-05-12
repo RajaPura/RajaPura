@@ -811,6 +811,7 @@ function limpGuardar(key){
   limpezas=limpezas.filter(function(l){return !(l.turno===key&&l.data===data);});
   limpezas.push(reg);
   saveLimpezas();
+  syncLimpeza(reg);
   limpChecked[key]={};
   showToast('\u2713 Limpeza guardada!');
   renderLimpCards();
