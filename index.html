@@ -868,48 +868,98 @@ function renderLimpHist(){
   }).join('');
 }
 function renderLimpAval(){
-  var c=document.getElementById('avalCards');
-  if(!c)return;
-  var mes=todayStr().substring(0,7);
-  var metaAt=meta>0&&totalGeral()>=meta;
-  c.innerHTML=Object.keys(TURNOS_LIMP).map(function(key){
-    var t=TURNOS_LIMP[key];
-    var regs=limpezas.filter(function(l){return l.turno===key&&l.data.startsWith(mes);});
-    var totalDias=regs.length;
-    var mediaNota=totalDias>0?Math.round(regs.reduce(function(s,r){return s+r.notaDia;},0)/totalDias):0;
-    var avisos=regs.filter(function(r){return r.aviso==='primeira_falha';}).length;
-    var falhas=regs.filter(function(r){return r.pct<100&&r.aviso!=='primeira_falha';}).length;
-    var qc=mediaNota>=90?1:mediaNota>=70?0.5:0;
-    var bm=metaAt?1:0;
-    var tc=1+qc+bm;
-    var nc=mediaNota>=90?'#8DC47A':mediaNota>=70?'var(--gold)':'#C44A2A';
-    return '<div class="aval-card" style="border-color:'+t.color+'33">'+
-      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">'+
-      '<div style="width:42px;height:42px;border-radius:50%;background:'+t.color+'18;border:2px solid '+t.color+';display:flex;align-items:center;justify-content:center;font-size:18px">'+t.emoji+'</div>'+
-      '<div><div style="font-family:Cormorant Garamond,serif;font-size:17px;color:var(--cream)">'+t.label+'</div>'+
-      '<div style="font-size:11px;color:var(--muted)">'+mes+'</div></div></div>'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
-      '<span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Nota do Mês</span>'+
-      '<span style="font-family:Cormorant Garamond,serif;font-size:26px;color:'+nc+'">'+(totalDias>0?mediaNota+'%':'--')+'</span></div>'+
-      '<div style="background:var(--surface3);border-radius:99px;height:6px;overflow:hidden;margin-bottom:16px">'+
-      '<div style="width:'+mediaNota+'%;height:100%;background:'+nc+';border-radius:99px"></div></div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">'+
-      '<div style="background:var(--surface2);border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--muted);margin-bottom:3px">Dias</div><div style="font-size:18px;font-family:Cormorant Garamond,serif;color:var(--cream)">'+totalDias+'</div></div>'+
-      '<div style="background:var(--surface2);border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--muted);margin-bottom:3px">Avisos</div><div style="font-size:18px;font-family:Cormorant Garamond,serif;color:var(--gold)">'+avisos+'</div></div>'+
-      '<div style="background:var(--surface2);border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--muted);margin-bottom:3px">Falhas</div><div style="font-size:18px;font-family:Cormorant Garamond,serif;color:'+(falhas>0?'#C44A2A':'#8DC47A')+'">'+falhas+'</div></div>'+
-      '</div>'+
-      '<div style="background:var(--surface2);border-radius:10px;padding:14px;border:1px solid '+t.color+'22">'+
-      '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Comissão</div>'+
-      '<div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:12px;color:var(--muted)">Base</span><span style="font-size:12px;color:var(--cream)">1%</span></div>'+
-      '<div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:12px;color:var(--muted)">Qualitativa</span><span style="font-size:12px;color:'+(qc>0?'#8DC47A':'#C44A2A')+'">'+(totalDias>0?qc+'%':'-')+'</span></div>'+
-      '<div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="font-size:12px;color:var(--muted)">Bónus Meta</span><span style="font-size:12px;color:'+(metaAt?'#8DC47A':'var(--muted)')+'">'+bm+'%</span></div>'+
-      '<div style="border-top:1px solid '+t.color+'33;padding-top:10px;display:flex;justify-content:space-between;align-items:center">'+
-      '<span style="font-size:12px;color:var(--muted)">Total</span>'+
-      '<span style="font-family:Cormorant Garamond,serif;font-size:22px;color:'+t.color+'">'+(totalDias>0?tc+'%':'--')+'</span>'+
+  var c = document.getElementById('avalCards');
+  if(!c) return;
+  var mes = todayStr().substring(0,7);
+  var mesNome = MESES[parseInt(mes.split('-')[1])-1] + ' ' + mes.split('-')[0];
+  var metaAt = meta > 0 && totalGeral() >= meta;
+
+  // Calcular dias uteis do mes ate hoje
+  var hoje = new Date();
+  var diasMes = 0;
+  var d = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  while(d <= hoje) {
+    var dow = d.getDay();
+    if(dow !== 0) diasMes++; // contar todos exceto domingo
+    d.setDate(d.getDate() + 1);
+  }
+
+  c.innerHTML = Object.keys(TURNOS_LIMP).map(function(key) {
+    var t = TURNOS_LIMP[key];
+    var regs = limpezas.filter(function(l){ return l.turno===key && l.data.startsWith(mes); });
+    var totalDias = regs.length;
+    var mediaNota = totalDias > 0 ? Math.round(regs.reduce(function(s,r){ return s+r.notaDia; }, 0) / totalDias) : 0;
+    var avisos = regs.filter(function(r){ return r.aviso==='primeira_falha'; }).length;
+    var falhas = regs.filter(function(r){ return r.pct<100 && r.aviso!=='primeira_falha'; }).length;
+
+    // Taxa de presenca = dias registados / dias uteis do mes ate hoje
+    var taxaPresenca = diasMes > 0 ? Math.round((totalDias / diasMes) * 100) : 0;
+    taxaPresenca = Math.min(100, taxaPresenca);
+
+    // Meta de limpeza atingida se taxa >= 75% E nota media >= 70%
+    var metaLimpAt = taxaPresenca >= 75 && mediaNota >= 70;
+
+    // COMISSAO:
+    // Base: 2% sempre
+    // Bonus: +1% se meta vendas atingida E meta limpeza atingida
+    var comissaoBase = 2;
+    var comissaoBonus = (metaAt && metaLimpAt) ? 1 : 0;
+    var comissaoTotal = comissaoBase + comissaoBonus;
+
+    var nc = mediaNota >= 90 ? '#8DC47A' : mediaNota >= 70 ? 'var(--gold)' : '#C44A2A';
+    var tcColor = taxaPresenca >= 75 ? '#8DC47A' : taxaPresenca >= 50 ? 'var(--gold)' : '#C44A2A';
+
+    return '<div class="aval-card" style="border-color:'+t.color+'33">' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">' +
+      '<div style="width:42px;height:42px;border-radius:50%;background:'+t.color+'18;border:2px solid '+t.color+';display:flex;align-items:center;justify-content:center;font-size:18px">'+t.emoji+'</div>' +
+      '<div><div style="font-family:Cormorant Garamond,serif;font-size:17px;color:var(--cream)">'+t.label+'</div>' +
+      '<div style="font-size:11px;color:var(--muted)">'+mesNome+' · '+totalDias+' registos</div></div></div>' +
+
+      // Nota media
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
+      '<span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Nota Média</span>' +
+      '<span style="font-family:Cormorant Garamond,serif;font-size:24px;color:'+nc+'">'+(totalDias>0?mediaNota+'%':'--')+'</span></div>' +
+      '<div style="background:var(--surface3);border-radius:99px;height:5px;overflow:hidden;margin-bottom:12px">' +
+      '<div style="width:'+mediaNota+'%;height:100%;background:'+nc+';border-radius:99px"></div></div>' +
+
+      // Taxa presenca
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
+      '<span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Presença</span>' +
+      '<span style="font-size:14px;font-weight:600;color:'+tcColor+'">'+taxaPresenca+'% <span style="font-size:11px;color:var(--muted)">('+totalDias+'/'+diasMes+' dias)</span></span></div>' +
+      '<div style="background:var(--surface3);border-radius:99px;height:5px;overflow:hidden;margin-bottom:14px">' +
+      '<div style="width:'+taxaPresenca+'%;height:100%;background:'+tcColor+';border-radius:99px"></div>' +
+      '<div style="position:relative"><div style="position:absolute;top:-10px;left:75%;width:1px;height:20px;background:var(--gold);opacity:0.5"></div></div></div>' +
+
+      // Stats
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">' +
+      '<div style="background:var(--surface2);border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--muted);margin-bottom:3px">Dias</div><div style="font-size:18px;font-family:Cormorant Garamond,serif;color:var(--cream)">'+totalDias+'</div></div>' +
+      '<div style="background:var(--surface2);border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--muted);margin-bottom:3px">Avisos</div><div style="font-size:18px;font-family:Cormorant Garamond,serif;color:var(--gold)">'+avisos+'</div></div>' +
+      '<div style="background:var(--surface2);border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--muted);margin-bottom:3px">Falhas</div><div style="font-size:18px;font-family:Cormorant Garamond,serif;color:'+(falhas>0?'#C44A2A':'#8DC47A')+'">'+falhas+'</div></div>' +
+      '</div>' +
+
+      // Meta limpeza status
+      '<div style="padding:10px 14px;border-radius:9px;margin-bottom:12px;background:'+(metaLimpAt?'rgba(90,158,90,.1)':'rgba(196,74,42,.1)')+';border:1px solid '+(metaLimpAt?'rgba(90,158,90,.3)':'rgba(196,74,42,.3)')+'">' +
+      '<div style="font-size:12px;color:'+(metaLimpAt?'#8DC47A':'#E07050')+';font-weight:600">' +
+      (metaLimpAt ? '✓ Meta de Limpeza Atingida' : '✗ Meta de Limpeza Não Atingida') + '</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-top:3px">Mínimo: 75% presença + nota ≥ 70%</div>' +
+      '</div>' +
+
+      // Comissao
+      '<div style="background:var(--surface2);border-radius:10px;padding:14px;border:1px solid '+t.color+'22">' +
+      '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Comissão do Mês</div>' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:13px;color:var(--muted)">Base (sempre)</span><span style="font-size:13px;color:#8DC47A;font-weight:600">2%</span></div>' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:10px">' +
+      '<span style="font-size:13px;color:var(--muted)">Bónus (meta vendas + limpeza)</span>' +
+      '<span style="font-size:13px;font-weight:600;color:'+(comissaoBonus>0?'#8DC47A':'var(--muted)')+'">'+(comissaoBonus>0?'+1%':'0%')+'</span></div>' +
+      (metaAt&&!metaLimpAt ? '<div style="font-size:11px;color:#E07050;margin-bottom:8px">⚠ Meta de vendas atingida mas limpeza insuficiente</div>' : '') +
+      (!metaAt ? '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">Meta de vendas ainda não atingida</div>' : '') +
+      '<div style="border-top:1px solid '+t.color+'33;padding-top:10px;display:flex;justify-content:space-between;align-items:center">' +
+      '<span style="font-size:13px;color:var(--muted)">Total</span>' +
+      '<span style="font-family:Cormorant Garamond,serif;font-size:28px;color:'+(comissaoTotal===3?'#8DC47A':'var(--gold)')+'">'+comissaoTotal+'%</span>' +
       '</div></div></div>';
   }).join('');
 }
-// DETAIL MODAL
+
 function openDetailModal(nome) {
   var col = COLABORADORES[nome];
   var today = todayStr();
