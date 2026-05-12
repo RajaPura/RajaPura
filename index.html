@@ -337,7 +337,7 @@ function goHome() {
 }
 // CONFIG
 var SHEETDB_VENDAS = 'https://sheetdb.io/api/v1/sdwyekoe0bhea';
-var SHEETDB_LIMP = 'https://sheetdb.io/api/v1/ztb0huxanbr8q';
+var SHEETDB_LIMP = 'https://sheetdb.io/api/v1/igqasg29lixh0';
 var COLABORADORES = {
   'Eduardo': {loja:'Lagos',turno:'Manha',color:'#C8913A',emoji:'&#128104;',campos:['loja']},
   'Zelia':   {loja:'Lagos',turno:'Tarde',color:'#E5B05A',emoji:'&#128105;',campos:['loja']},
@@ -432,7 +432,7 @@ async function postRegisto(registo) {
   var res = await fetch(SHEETDB_VENDAS, {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({data:{id:registo.id,nome:registo.nome,loja:registo.loja,data:registo.data,valores:JSON.stringify(registo.valores||{}),total:registo.total,criado_em:new Date().toISOString()}})
+    body:JSON.stringify({sheet:'Limpezas',data:{id:registo.id,nome:registo.nome,loja:registo.loja,data:registo.data,valores:JSON.stringify(registo.valores||{}),total:registo.total,criado_em:new Date().toISOString()}})
   });
   return await res.json();
 }
@@ -659,7 +659,7 @@ function setLimpSync(state, text) {
 async function fetchLimpezas() {
   setLimpSync('sync', '⟳ A carregar limpezas...');
   try {
-    var res = await fetch(SHEETDB_LIMP);
+    var res = await fetch(SHEETDB_LIMP + '?sheet=Limpezas');
     var data = await res.json();
     var arr = Array.isArray(data) ? data : [];
     limpezas = arr.map(function(r) {
@@ -685,7 +685,7 @@ async function syncLimpeza(reg) {
     var res = await fetch(SHEETDB_LIMP, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({data:{
+      body:JSON.stringify({sheet:'Limpezas',data:{
         id:reg.id,
         turno:reg.turno,
         nome:reg.nome||'',
