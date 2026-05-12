@@ -636,27 +636,50 @@ function saveMetaModal(){meta=Number(document.getElementById('metaModalInput').v
 function saveMeta(){meta=Number(document.getElementById('metaInput').value||0);localStorage.setItem('rp_meta',meta);updateMetaBtn();renderDashboard();}
 function updateMetaBtn(){document.getElementById('metaBtnText').textContent=meta>0?'Meta: '+fmt(meta):'\u2295 Definir Meta';}
 // LIMPEZAS
+
+function setLimpSync(state, text) {
+  var el = document.getElementById('limpSyncBar');
+  if(!el) return;
+  if(state === 'ok') {
+    el.style.background = 'rgba(90,158,90,.1)';
+    el.style.borderColor = 'rgba(90,158,90,.3)';
+    el.style.color = '#8DC47A';
+  } else if(state === 'err') {
+    el.style.background = 'rgba(196,74,42,.1)';
+    el.style.borderColor = 'rgba(196,74,42,.3)';
+    el.style.color = '#E07050';
+  } else {
+    el.style.background = 'rgba(200,145,58,.1)';
+    el.style.borderColor = 'rgba(200,145,58,.3)';
+    el.style.color = 'var(--gold)';
+  }
+  el.textContent = text;
+}
+
 async function fetchLimpezas() {
+  setLimpSync('sync', '⟳ A carregar limpezas...');
   try {
     var res = await fetch(SHEETDB_LIMP);
     var data = await res.json();
     var arr = Array.isArray(data) ? data : [];
-    if(arr.length >= 0) {
-      limpezas = arr.map(function(r) {
-        return {
-          id:r.id, turno:r.turno, nome:r.nome, data:r.data,
-          tarefas: typeof r.tarefas==='string' ? JSON.parse(r.tarefas||'[]') : (r.tarefas||[]),
-          pct:Number(r.pct||0), notaDia:Number(r.notaDia||0),
-          aviso:r.aviso||'', obs:r.obs||''
-        };
-      });
-      try{localStorage.setItem('rp_limpezas3',JSON.stringify(limpezas));}catch(e){}
-      var sb=document.getElementById('limpSyncBar');if(sb){sb.style.borderColor='rgba(90,158,90,.3)';sb.style.background='rgba(90,158,90,.1)';sb.style.color='#8DC47A';sb.textContent='✓ Ligado ao Google Sheets · '+limpezas.length+' registos de limpeza';}
-      renderLimpCards();
-      if(document.getElementById('limp-historico') && document.getElementById('limp-historico').style.display!=='none') renderLimpHist();
-    }
-  } catch(e) { var sb=document.getElementById('limpSyncBar');if(sb){sb.style.borderColor='rgba(196,74,42,.3)';sb.style.background='rgba(196,74,42,.1)';sb.style.color='#E07050';sb.textContent='⚠ Offline — a usar dados locais';} console.log('Limpezas offline:', e); }
+    limpezas = arr.map(function(r) {
+      return {
+        id: r.id, turno: r.turno, nome: r.nome, data: r.data,
+        tarefas: typeof r.tarefas==='string' ? JSON.parse(r.tarefas||'[]') : (r.tarefas||[]),
+        pct: Number(r.pct||0), notaDia: Number(r.notaDia||0),
+        aviso: r.aviso||'', obs: r.obs||''
+      };
+    });
+    try { localStorage.setItem('rp_limpezas3', JSON.stringify(limpezas)); } catch(e) {}
+    setLimpSync('ok', '✓ Ligado ao Google Sheets · ' + limpezas.length + ' registos de limpeza');
+    renderLimpCards();
+    if(document.getElementById('limp-historico') && document.getElementById('limp-historico').style.display !== 'none') renderLimpHist();
+  } catch(e) {
+    console.log('Limpezas erro:', e);
+    setLimpSync('err', '⚠ Offline — a usar dados locais');
+  }
 }
+
 async function syncLimpeza(reg) {
   try {
     var res = await fetch(SHEETDB_LIMP, {
