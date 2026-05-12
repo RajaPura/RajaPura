@@ -688,30 +688,34 @@ function fetchLimpezas() {
   document.body.appendChild(script);
 }
 
-async function syncLimpeza(reg) {
+function syncLimpeza(reg) {
   try {
-    await fetch(SCRIPT_LIMP, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        sheet: 'limpezas',
-        registo: {
-          id: reg.id,
-          turno: reg.turno,
-          nome: reg.nome||'',
-          data: reg.data,
-          tarefas: JSON.stringify(reg.tarefas||[]),
-          pct: reg.pct||0,
-          notaDia: reg.notaDia||0,
-          aviso: reg.aviso||'',
-          obs: reg.obs||''
-        }
-      })
-    });
-    console.log('Limpeza enviada para o Sheets!');
+    var params = [
+      'action=save',
+      'sheet=limpezas',
+      'id=' + encodeURIComponent(reg.id),
+      'turno=' + encodeURIComponent(reg.turno),
+      'nome=' + encodeURIComponent(reg.nome||''),
+      'data=' + encodeURIComponent(reg.data),
+      'tarefas=' + encodeURIComponent(JSON.stringify(reg.tarefas||[])),
+      'pct=' + encodeURIComponent(reg.pct||0),
+      'notaDia=' + encodeURIComponent(reg.notaDia||0),
+      'aviso=' + encodeURIComponent(reg.aviso||''),
+      'obs=' + encodeURIComponent(reg.obs||''),
+      'callback=cbSave'
+    ].join('&');
+    
+    window.cbSave = function(result) {
+      console.log('Limpeza guardada:', result);
+    };
+    
+    var script = document.createElement('script');
+    script.src = SCRIPT_LIMP + '?' + params;
+    script.onload = function() { document.body.removeChild(script); };
+    script.onerror = function() { document.body.removeChild(script); };
+    document.body.appendChild(script);
   } catch(e) {
-    console.log('Sync limpeza falhou:', e);
+    console.log('Sync erro:', e);
   }
 }
 
