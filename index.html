@@ -684,27 +684,26 @@ async function fetchLimpezas() {
 
 async function syncLimpeza(reg) {
   try {
-    // Delete old record for same turno+data
-    try {
-      await fetch(SHEETDB_LIMP+'/turno/'+encodeURIComponent(reg.turno), {
-        method:'DELETE',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({column:'data', value:reg.data})
-      });
-    } catch(e) {}
-    // Insert new
-    await fetch(SHEETDB_LIMP, {
+    var res = await fetch(SHEETDB_LIMP, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({data:{
-        id:reg.id, turno:reg.turno, nome:reg.nome||'', data:reg.data,
+        id:reg.id,
+        turno:reg.turno,
+        nome:reg.nome||'',
+        data:reg.data,
         tarefas:JSON.stringify(reg.tarefas||[]),
-        pct:reg.pct||0, notaDia:reg.notaDia||0,
-        aviso:reg.aviso||'', obs:reg.obs||''
+        pct:String(reg.pct||0),
+        notaDia:String(reg.notaDia||0),
+        aviso:reg.aviso||'',
+        obs:reg.obs||''
       }})
     });
-    console.log('Limpeza sincronizada com Google Sheets!');
-  } catch(e) { console.log('Sync limpeza falhou:', e); }
+    var result = await res.json();
+    console.log('Limpeza guardada no Sheets:', result);
+  } catch(e) {
+    console.log('Sync limpeza falhou:', e);
+  }
 }
 
 function saveLimpezas(){try{localStorage.setItem('rp_limpezas3',JSON.stringify(limpezas));}catch(e){}}
