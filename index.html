@@ -531,9 +531,15 @@ function renderEquipa() {
       '<div style="font-size:11px;color:var(--muted)">'+col.turno+'</div></div></div>';
 
     // Hoje + Total
-    var totals = '<div style="display:flex;justify-content:space-between;margin-bottom:12px">' +
-      '<div><div style="font-size:11px;color:var(--muted)">Hoje</div><div style="font-family:Cormorant Garamond,serif;font-size:20px;color:'+col.color+'">'+fmt(hj)+'</div></div>' +
-      '<div style="text-align:right"><div style="font-size:11px;color:var(--muted)">Total Mês</div><div style="font-family:Cormorant Garamond,serif;font-size:20px;color:var(--cream)">'+fmt(tM)+'</div></div>' +
+    var totals = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:12px 14px;">' +
+      '<div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Hoje</div>' +
+      '<div style="font-family:Cormorant Garamond,serif;font-size:22px;color:'+col.color+'">'+fmt(hj)+'</div>' +
+      '</div>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:12px 14px;">' +
+      '<div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Total Mês</div>' +
+      '<div style="font-family:Cormorant Garamond,serif;font-size:22px;color:var(--cream)">'+fmt(tM)+'</div>' +
+      '</div>' +
       '</div>';
 
     // Breakdown por canal
