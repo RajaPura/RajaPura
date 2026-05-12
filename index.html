@@ -336,7 +336,8 @@ function goHome() {
   document.querySelectorAll('.tab').forEach(function(t){ t.style.display = ''; });
 }
 // CONFIG
-var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxNn6iBrqFAYrSu-ZGWBNS3VhJS9WTaw69HjFvWIewfvZOn9PJd_yTuJ2eqbQwcLGY/exec';
+var SHEETDB_VENDAS = 'https://sheetdb.io/api/v1/sdwyekoe0bhea';
+var SHEETDB_LIMP = 'https://sheetdb.io/api/v1/e6ncwdvzfekwx';
 var COLABORADORES = {
   'Eduardo': {loja:'Lagos',turno:'Manha',color:'#C8913A',emoji:'&#128104;',campos:['loja']},
   'Zelia':   {loja:'Lagos',turno:'Tarde',color:'#E5B05A',emoji:'&#128105;',campos:['loja']},
@@ -417,9 +418,9 @@ function setConnStatus(state,text) {
 }
 async function fetchRegistos() {
   try {
-    var res = await fetch(SCRIPT_URL+'?action=get');
+    var res = await fetch(SHEETDB_VENDAS);
     var data = await res.json();
-    registos = data.registos||[];
+    if(Array.isArray(data)){registos=data.map(function(r){return{id:r.id,nome:r.nome,loja:r.loja,data:r.data,valores:typeof r.valores==='string'?JSON.parse(r.valores||'{}'):(r.valores||{}),total:Number(r.total||0)};});} else {registos=data.registos||[];}
     setConnStatus('connected','Ligado ao Google Sheets \u00b7 '+registos.length+' registos');
     renderDashboard(); renderEquipa();
   } catch(e) {
@@ -428,17 +429,14 @@ async function fetchRegistos() {
   }
 }
 async function postRegisto(registo) {
-  var res = await fetch(SCRIPT_URL, {
+  var res = await fetch(SHEETDB_VENDAS, {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({action:'add',registo:{id:registo.id,nome:registo.nome,loja:registo.loja,data:registo.data,valores:registo.valores,total:registo.total}})
+    body:JSON.stringify({data:{id:registo.id,nome:registo.nome,loja:registo.loja,data:registo.data,valores:JSON.stringify(registo.valores||{}),total:registo.total,criado_em:new Date().toISOString()}})
   });
   return await res.json();
 }
-async function _oldPostRegisto(registo) {
-  var res = await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'add',registo:registo})});
-  return await res.json();
-}
+
 // TABS
 function switchTab(tab,btn) {
   ['dashboard','equipa','tabela','limpezas','config'].forEach(function(t){
@@ -640,9 +638,9 @@ function updateMetaBtn(){document.getElementById('metaBtnText').textContent=meta
 // LIMPEZAS
 async function fetchLimpezas() {
   try {
-    var res = await fetch(SCRIPT_URL+'?sheet=limpezas');
+    var res = await fetch(SHEETDB_LIMP);
     var data = await res.json();
-    var arr = data.limpezas || (Array.isArray(data) ? data : []);
+    var arr = Array.isArray(data) ? data : (data.limpezas || []);
     if(arr.length >= 0) {
       limpezas = arr.map(function(r) {
         return {
@@ -661,10 +659,10 @@ async function fetchLimpezas() {
 }
 async function syncLimpeza(reg) {
   try {
-    var res = await fetch(SCRIPT_URL, {
+    var res = await fetch(SHEETDB_LIMP, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({sheet:'limpezas',registo:{
+      body:JSON.stringify({data:{
         id:reg.id,
         turno:reg.turno,
         nome:reg.nome||'',
