@@ -690,27 +690,31 @@ function fetchLimpezas() {
 
 async function syncLimpeza(reg) {
   try {
-    var res = await fetch(SCRIPT_LIMP, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({sheet:'limpezas',registo:{
-        id:reg.id,
-        turno:reg.turno,
-        nome:reg.nome||'',
-        data:reg.data,
-        tarefas:JSON.stringify(reg.tarefas||[]),
-        pct:String(reg.pct||0),
-        notaDia:String(reg.notaDia||0),
-        aviso:reg.aviso||'',
-        obs:reg.obs||''
-      }})
+    await fetch(SCRIPT_LIMP, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        sheet: 'limpezas',
+        registo: {
+          id: reg.id,
+          turno: reg.turno,
+          nome: reg.nome||'',
+          data: reg.data,
+          tarefas: JSON.stringify(reg.tarefas||[]),
+          pct: reg.pct||0,
+          notaDia: reg.notaDia||0,
+          aviso: reg.aviso||'',
+          obs: reg.obs||''
+        }
+      })
     });
-    var result = await res.json();
-    console.log('Limpeza guardada no Sheets:', result);
+    console.log('Limpeza enviada para o Sheets!');
   } catch(e) {
     console.log('Sync limpeza falhou:', e);
   }
 }
+
 function saveLimpezas(){try{localStorage.setItem('rp_limpezas3',JSON.stringify(limpezas));}catch(e){}}
 function renderLimpCards(){
   var grid=document.getElementById('limpCards');
