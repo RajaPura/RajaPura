@@ -682,10 +682,10 @@ async function fetchLimpezas() {
 
 async function syncLimpeza(reg) {
   try {
-    var res = await fetch(SHEETDB_LIMP, {
+    var res = await fetch(SHEETDB_LIMP + '?sheet=Limpezas', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({sheet:'Limpezas',data:{
+      body:JSON.stringify({data:{
         id:reg.id,
         turno:reg.turno,
         nome:reg.nome||'',
