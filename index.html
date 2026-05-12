@@ -338,7 +338,7 @@ function goHome() {
 }
 // CONFIG
 var SHEETDB_VENDAS = 'https://sheetdb.io/api/v1/sdwyekoe0bhea';
-var SHEETDB_LIMP = 'https://sheetdb.io/api/v1/igqasg29lixh0';
+var SCRIPT_LIMP = 'https://script.google.com/macros/s/AKfycbxWu3aS-Bpal8hfk_099-Y9EnWJb8r9VpvWoouh2TTviFi56GfWdxc648Koqx1OgttK/exec';
 var COLABORADORES = {
   'Eduardo': {loja:'Lagos',turno:'Manha',color:'#C8913A',emoji:'&#128104;',campos:['loja']},
   'Zelia':   {loja:'Lagos',turno:'Tarde',color:'#E5B05A',emoji:'&#128105;',campos:['loja']},
@@ -657,35 +657,43 @@ function setLimpSync(state, text) {
   el.textContent = text;
 }
 
-async function fetchLimpezas() {
+function fetchLimpezas() {
   setLimpSync('sync', '⟳ A carregar limpezas...');
-  try {
-    var res = await fetch(SHEETDB_LIMP + '?sheet=Limpezas');
-    if(!res.ok) throw new Error('HTTP ' + res.status);
-    var data = await res.json();
-    limpezas = Array.isArray(data) ? data.map(function(r) {
-      return {
-        id: r.id, turno: r.turno, nome: r.nome, data: r.data,
-        tarefas: typeof r.tarefas==='string' ? JSON.parse(r.tarefas||'[]') : (r.tarefas||[]),
-        pct: Number(r.pct||0), notaDia: Number(r.notaDia||0),
-        aviso: r.aviso||'', obs: r.obs||''
-      };
-    }) : [];
-    try { localStorage.setItem('rp_limpezas3', JSON.stringify(limpezas)); } catch(e) {}
-    setLimpSync('ok', '✓ Ligado ao Google Sheets · ' + limpezas.length + ' registos de limpeza');
-    renderLimpCards();
-  } catch(e) {
-    console.log('Limpezas erro:', e);
+  var callbackName = 'cb_limp_' + Date.now();
+  var script = document.createElement('script');
+  script.src = SCRIPT_LIMP + '?sheet=limpezas&callback=' + callbackName;
+  window[callbackName] = function(data) {
+    delete window[callbackName];
+    document.body.removeChild(script);
+    try {
+      var arr = data.limpezas || [];
+      limpezas = arr.map(function(r) {
+        return {
+          id: r.id, turno: r.turno, nome: r.nome, data: r.data,
+          tarefas: typeof r.tarefas==='string' ? JSON.parse(r.tarefas||'[]') : (r.tarefas||[]),
+          pct: Number(r.pct||0), notaDia: Number(r.notaDia||0),
+          aviso: r.aviso||'', obs: r.obs||''
+        };
+      });
+      try { localStorage.setItem('rp_limpezas3', JSON.stringify(limpezas)); } catch(e) {}
+      setLimpSync('ok', '✓ Ligado ao Google Sheets · ' + limpezas.length + ' registos de limpeza');
+      renderLimpCards();
+    } catch(e) {
+      setLimpSync('err', '⚠ Erro ao carregar limpezas');
+    }
+  };
+  script.onerror = function() {
     setLimpSync('err', '⚠ Offline — a usar dados locais');
-  }
+  };
+  document.body.appendChild(script);
 }
 
 async function syncLimpeza(reg) {
   try {
-    var res = await fetch(SHEETDB_LIMP + '?sheet=Limpezas', {
+    var res = await fetch(SCRIPT_LIMP, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({data:{
+      body:JSON.stringify({sheet:'limpezas',registo:{
         id:reg.id,
         turno:reg.turno,
         nome:reg.nome||'',
