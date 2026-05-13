@@ -419,7 +419,7 @@ function setConnStatus(state,text) {
 }
 async function fetchRegistos() {
   try {
-    var res = await fetch(SHEETDB_VENDAS + '/search?data=' + mesAtual() + '&caseSensitive=true&sortBy=data&sortOrder=asc');
+    var res = await fetch(SHEETDB_VENDAS);
     var data = await res.json();
     if(Array.isArray(data)){registos=data.map(function(r){return{id:r.id,nome:r.nome,loja:r.loja,data:r.data,valores:typeof r.valores==='string'?JSON.parse(r.valores||'{}'):(r.valores||{}),total:Number(String(r.total||0).replace(',','.'))};});} else {registos=data.registos||[];}
     setConnStatus('connected','Ligado ao Google Sheets \u00b7 '+registos.length+' registos');
