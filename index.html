@@ -391,7 +391,7 @@ function pct(v,t) { return t>0?Math.min(100,Math.round((v/t)*100)):0; }
 function mesAtual() { return new Date().toISOString().substring(0,7); }
 function totalGeral() { 
   var mes = mesAtual();
-  return registos.filter(function(r){ return r.data && r.data.substring(0,7) === mes; }).reduce(function(s,r){return s+Number(r.total||0);},0); 
+  return registos.filter(function(r){ return r.data && r.data.substring(0,7) === mes; }).reduce(function(s,r){return s+parseNum(r.total);},0); 
 }
 function showToast(msg) {
   var t=document.getElementById('toast');
@@ -421,7 +421,7 @@ async function fetchRegistos() {
   try {
     var res = await fetch(SHEETDB_VENDAS);
     var data = await res.json();
-    if(Array.isArray(data)){registos=data.map(function(r){return{id:r.id,nome:r.nome,loja:r.loja,data:r.data,valores:typeof r.valores==='string'?JSON.parse(r.valores||'{}'):(r.valores||{}),total:Number(r.total||0)};});} else {registos=data.registos||[];}
+    if(Array.isArray(data)){registos=data.map(function(r){return{id:r.id,nome:r.nome,loja:r.loja,data:r.data,valores:typeof r.valores==='string'?JSON.parse(r.valores||'{}'):(r.valores||{}),total:Number(String(r.total||0).replace(',','.'))};});} else {registos=data.registos||[];}
     setConnStatus('connected','Ligado ao Google Sheets \u00b7 '+registos.length+' registos');
     renderDashboard(); renderEquipa();
   } catch(e) {
@@ -455,10 +455,10 @@ function renderDashboard() {
   var today=todayStr();
   var mes=mesAtual();
   var registosMes=registos.filter(function(r){return r.data&&r.data.substring(0,7)===mes;});
-  var tHoje=registosMes.filter(function(r){return r.data===today;}).reduce(function(s,r){return s+Number(r.total||0);},0);
-  var tMes=registosMes.reduce(function(s,r){return s+Number(r.total||0);},0);
-  var tLagos=registosMes.filter(function(r){return COLABORADORES[r.nome]&&COLABORADORES[r.nome].loja==='Lagos';}).reduce(function(s,r){return s+Number(r.total||0);},0);
-  var tSilves=registosMes.filter(function(r){return COLABORADORES[r.nome]&&COLABORADORES[r.nome].loja==='Silves';}).reduce(function(s,r){return s+Number(r.total||0);},0);
+  var tHoje=registosMes.filter(function(r){return r.data===today;}).reduce(function(s,r){return s+parseNum(r.total);},0);
+  var tMes=registosMes.reduce(function(s,r){return s+parseNum(r.total);},0);
+  var tLagos=registosMes.filter(function(r){return COLABORADORES[r.nome]&&COLABORADORES[r.nome].loja==='Lagos';}).reduce(function(s,r){return s+parseNum(r.total);},0);
+  var tSilves=registosMes.filter(function(r){return COLABORADORES[r.nome]&&COLABORADORES[r.nome].loja==='Silves';}).reduce(function(s,r){return s+parseNum(r.total);},0);
   var mesNome = MESES[parseInt(mes.split('-')[1])-1]+' '+mes.split('-')[0];
   document.getElementById('kpiHoje').textContent=fmt(tHoje);
   document.getElementById('kpiHojeData').textContent=today;
@@ -496,7 +496,7 @@ function renderDashboard() {
   var maxH=Math.max(tHoje,1);
   document.getElementById('todayCollabs').innerHTML=Object.keys(COLABORADORES).map(function(nome){
     var col=COLABORADORES[nome];
-    var v=registosMes.filter(function(r){return r.nome===nome&&r.data===today;}).reduce(function(s,r){return s+Number(r.total||0);},0);
+    var v=registosMes.filter(function(r){return r.nome===nome&&r.data===today;}).reduce(function(s,r){return s+parseNum(r.total);},0);
     var p=Math.min(100,Math.round((v/maxH)*100));
     return '<div class="collab-row"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div><span style="font-size:13px;color:var(--cream)">'+nome+'</span><span style="font-size:11px;color:var(--muted);margin-left:6px">'+col.loja+'</span></div><span style="font-size:13px;font-weight:600;color:'+col.color+'">'+fmt(v)+'</span></div><div class="bar-track"><div class="bar-fill" style="width:'+p+'%;background:'+col.color+'"></div></div></div>';
   }).join('');
@@ -510,8 +510,8 @@ function renderEquipa() {
   Object.keys(COLABORADORES).forEach(function(nome) {
     var col = COLABORADORES[nome];
     var recs = registos.filter(function(r){ return r.nome===nome && r.data && r.data.substring(0,7)===mes; });
-    var tM = recs.reduce(function(s,r){ return s+Number(r.total||0); }, 0);
-    var hj = recs.filter(function(r){ return r.data===todayStr(); }).reduce(function(s,r){ return s+Number(r.total||0); }, 0);
+    var tM = recs.reduce(function(s,r){ return s+parseNum(r.total); }, 0);
+    var hj = recs.filter(function(r){ return r.data===todayStr(); }).reduce(function(s,r){ return s+parseNum(r.total); }, 0);
     var card = document.createElement('div');
     card.className = 'collab-card';
     card.style.borderColor = col.color + '33';
@@ -576,16 +576,16 @@ function renderTabela() {
     if(datas.length===0){html+='<tr><td colspan="'+(colab.length+2)+'" style="text-align:center;color:var(--muted);font-style:italic;padding:30px">Sem registos</td></tr>';}
     else{datas.forEach(function(data){
       var dr=lr.filter(function(r){return r.data===data;});
-      var td=dr.reduce(function(s,r){return s+Number(r.total||0);},0);
+      var td=dr.reduce(function(s,r){return s+parseNum(r.total);},0);
       html+='<tr><td style="color:var(--muted)">'+fmtDate(data)+'</td>';
       colab.forEach(function(c){var r=dr.find(function(r){return r.nome===c;});html+='<td style="text-align:right;color:'+(r?'var(--cream)':'var(--muted2)')+'">'+( r?fmt(r.total):'—')+'</td>';});
       html+='<td style="text-align:right;color:'+lc+';font-family:Cormorant Garamond,serif;font-size:15px;font-weight:600">'+fmt(td)+'</td></tr>';
     });}
-    var tl=lr.reduce(function(s,r){return s+Number(r.total||0);},0);
-    html+='</tbody><tfoot><tr><td style="color:var(--muted);font-size:12px">Total mês</td>'+colab.map(function(c){var t=lr.filter(function(r){return r.nome===c;}).reduce(function(s,r){return s+Number(r.total||0);},0);return '<td style="text-align:right;color:'+COLABORADORES[c].color+'">'+fmt(t)+'</td>';}).join('')+'<td style="text-align:right;color:'+lc+';font-family:Cormorant Garamond,serif;font-size:16px">'+fmt(tl)+'</td></tr></tfoot></table></div></div>';
+    var tl=lr.reduce(function(s,r){return s+parseNum(r.total);},0);
+    html+='</tbody><tfoot><tr><td style="color:var(--muted);font-size:12px">Total mês</td>'+colab.map(function(c){var t=lr.filter(function(r){return r.nome===c;}).reduce(function(s,r){return s+parseNum(r.total);},0);return '<td style="text-align:right;color:'+COLABORADORES[c].color+'">'+fmt(t)+'</td>';}).join('')+'<td style="text-align:right;color:'+lc+';font-family:Cormorant Garamond,serif;font-size:16px">'+fmt(tl)+'</td></tr></tfoot></table></div></div>';
   });
   var tg=totalGeral();
-  html+='<div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Loja</th><th style="text-align:right">Total Mês</th></tr></thead><tbody>'+Object.keys(COLABORADORES).map(function(nome){var col=COLABORADORES[nome];var t=registos.filter(function(r){return r.nome===nome&&r.data&&r.data.substring(0,7)===mes;}).reduce(function(s,r){return s+Number(r.total||0);},0);var lc=col.loja==='Lagos'?'var(--lagos)':'var(--silves-light)';return '<tr><td style="color:var(--cream)">'+nome+'</td><td><span style="font-size:11px;padding:3px 10px;border-radius:99px;background:'+(col.loja==='Lagos'?'rgba(200,145,58,.12)':'rgba(110,158,96,.12)')+';color:'+lc+'">'+col.loja+'</span></td><td style="text-align:right;color:'+col.color+';font-family:Cormorant Garamond,serif;font-size:16px">'+fmt(t)+'</td></tr>';}).join('')+'</tbody><tfoot><tr><td colspan="2" style="color:var(--gold);font-family:Cormorant Garamond,serif">Total Geral</td><td style="text-align:right;color:var(--gold);font-family:Cormorant Garamond,serif;font-size:18px">'+fmt(tg)+'</td></tr>'+(meta>0?'<tr><td colspan="2" style="color:var(--muted);font-size:12px">Meta mensal</td><td style="text-align:right;color:var(--muted);font-size:12px">'+fmt(meta)+'</td></tr>':'')+'</tfoot></table></div>';
+  html+='<div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Loja</th><th style="text-align:right">Total Mês</th></tr></thead><tbody>'+Object.keys(COLABORADORES).map(function(nome){var col=COLABORADORES[nome];var t=registos.filter(function(r){return r.nome===nome&&r.data&&r.data.substring(0,7)===mes;}).reduce(function(s,r){return s+parseNum(r.total);},0);var lc=col.loja==='Lagos'?'var(--lagos)':'var(--silves-light)';return '<tr><td style="color:var(--cream)">'+nome+'</td><td><span style="font-size:11px;padding:3px 10px;border-radius:99px;background:'+(col.loja==='Lagos'?'rgba(200,145,58,.12)':'rgba(110,158,96,.12)')+';color:'+lc+'">'+col.loja+'</span></td><td style="text-align:right;color:'+col.color+';font-family:Cormorant Garamond,serif;font-size:16px">'+fmt(t)+'</td></tr>';}).join('')+'</tbody><tfoot><tr><td colspan="2" style="color:var(--gold);font-family:Cormorant Garamond,serif">Total Geral</td><td style="text-align:right;color:var(--gold);font-family:Cormorant Garamond,serif;font-size:18px">'+fmt(tg)+'</td></tr>'+(meta>0?'<tr><td colspan="2" style="color:var(--muted);font-size:12px">Meta mensal</td><td style="text-align:right;color:var(--muted);font-size:12px">'+fmt(meta)+'</td></tr>':'')+'</tfoot></table></div>';
   container.innerHTML=html;
 }
 // MODAL VENDAS
@@ -965,8 +965,8 @@ function openDetailModal(nome) {
   var today = todayStr();
   var recs = registos.filter(function(r){ return r.nome === nome; });
   var recsHoje = recs.filter(function(r){ return r.data === today; });
-  var totalMes = recs.reduce(function(s,r){ return s+Number(r.total||0); }, 0);
-  var totalHoje = recsHoje.reduce(function(s,r){ return s+Number(r.total||0); }, 0);
+  var totalMes = recs.reduce(function(s,r){ return s+parseNum(r.total); }, 0);
+  var totalHoje = recsHoje.reduce(function(s,r){ return s+parseNum(r.total); }, 0);
   document.getElementById('detailModalTitle').innerHTML =
     '<span style="font-size:18px;margin-right:8px">' + col.emoji + '</span>' + nome;
   // Sum by canal for this month
