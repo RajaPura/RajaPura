@@ -578,7 +578,7 @@ function renderTabela() {
       var dr=lr.filter(function(r){return r.data===data;});
       var td=dr.reduce(function(s,r){return s+parseNum(r.total);},0);
       html+='<tr><td style="color:var(--muted)">'+fmtDate(data)+'</td>';
-      colab.forEach(function(c){var r=dr.find(function(r){return r.nome===c;});html+='<td style="text-align:right;color:'+(r?'var(--cream)':'var(--muted2)')+'">'+( r?fmt(r.total):'—')+'</td>';});
+      colab.forEach(function(c){var recs=dr.filter(function(r){return r.nome===c;});var vTotal=recs.reduce(function(s,r){return s+parseNum(r.total);},0);html+='<td style="text-align:right;color:'+(recs.length>0?'var(--cream)':'var(--muted2)')+'">'+( recs.length>0?fmt(vTotal):'—')+'</td>';});
       html+='<td style="text-align:right;color:'+lc+';font-family:Cormorant Garamond,serif;font-size:15px;font-weight:600">'+fmt(td)+'</td></tr>';
     });}
     var tl=lr.reduce(function(s,r){return s+parseNum(r.total);},0);
