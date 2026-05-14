@@ -628,19 +628,20 @@ function openEditCliente(id) {
 }
 
 function closeModal() {
-  var modal = document.getElementById('modal') || document.getElementById('clienteModal');
+  var modal = document.getElementById('clienteModal');
   if(modal) {
     modal.style.display = 'none';
     modal.removeAttribute('data-mode');
     modal.removeAttribute('data-client-id');
   }
-  document.getElementById('clienteModal').style.display = 'none';
   editingId = null;
-  // Reset hidden fields
   var fieldsToShow = ['fTelefone','fNome','fEmail','fPais','fCanal','fNivel','fNotas','fRegistadoPor'];
   fieldsToShow.forEach(function(fid){
     var el = document.getElementById(fid);
-    if(el && el.closest('.form-group')) el.closest('.form-group').style.display = '';
+    if(el) {
+      var fg = el.closest ? el.closest('.form-group') : null;
+      if(fg) fg.style.display = '';
+    }
   });
   comprasTemp = [];
 }
@@ -773,7 +774,7 @@ function openNovaCompra(clientId) {
 
 function saveCliente() {
   // Check if we're in nova-compra mode
-  var modal = document.getElementById('modal');
+  var modal = document.getElementById('clienteModal');
   if(modal && modal.getAttribute('data-mode') === 'nova-compra') {
     var clientId = modal.getAttribute('data-client-id');
     var c = clientes.find(function(x){return x.id===clientId;});
