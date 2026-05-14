@@ -628,8 +628,21 @@ function openEditCliente(id) {
 }
 
 function closeModal() {
+  var modal = document.getElementById('modal') || document.getElementById('clienteModal');
+  if(modal) {
+    modal.style.display = 'none';
+    modal.removeAttribute('data-mode');
+    modal.removeAttribute('data-client-id');
+  }
   document.getElementById('clienteModal').style.display = 'none';
   editingId = null;
+  // Reset hidden fields
+  var fieldsToShow = ['fTelefone','fNome','fEmail','fPais','fCanal','fNivel','fNotas','fRegistadoPor'];
+  fieldsToShow.forEach(function(fid){
+    var el = document.getElementById(fid);
+    if(el && el.closest('.form-group')) el.closest('.form-group').style.display = '';
+  });
+  comprasTemp = [];
 }
 
 // COMPRAS FORM
@@ -729,7 +742,54 @@ function updateItem(compraIdx, itemIdx, field, value) {
   comprasTemp[compraIdx].items[itemIdx][field] = value;
 }
 
+
+function openNovaCompra(clientId) {
+  var c = clientes.find(function(x){return x.id===clientId;});
+  if(!c) return;
+  editingId = clientId;
+  comprasTemp = [{id:String(Date.now()), data:todayStr(), canal:'loja', items:[{referencia:'', descricao:''}], valor:'', desconto:0, obs:''}];
+  
+  var titleEl = document.getElementById('modalTitle');
+  if(titleEl) titleEl.textContent = 'Nova Compra — ' + (c.nome||c.telefone);
+  
+  var deleteBtn = document.getElementById('btnDelete');
+  if(deleteBtn) deleteBtn.style.display = 'none';
+  
+  // Hide personal data fields
+  ['fTelefone','fNome','fEmail','fPais','fCanal','fNivel','fNotas','fRegistadoPor'].forEach(function(fid){
+    var el = document.getElementById(fid);
+    if(el) {
+      var fg = el.closest ? el.closest('.form-group') : null;
+      if(fg) fg.style.display = 'none';
+    }
+  });
+  
+  document.getElementById('clienteModal').setAttribute('data-mode','nova-compra');
+  document.getElementById('clienteModal').setAttribute('data-client-id', clientId);
+  
+  renderComprasForm();
+  document.getElementById('clienteModal').style.display = 'flex';
+}
+
 function saveCliente() {
+  // Check if we're in nova-compra mode
+  var modal = document.getElementById('modal');
+  if(modal && modal.getAttribute('data-mode') === 'nova-compra') {
+    var clientId = modal.getAttribute('data-client-id');
+    var c = clientes.find(function(x){return x.id===clientId;});
+    if(!c) return;
+    if(!c.compras) c.compras = [];
+    comprasTemp.forEach(function(compra){
+      c.compras.push(compra);
+    });
+    saveClientes();
+    syncCliente(c);
+    closeModal();
+    openDetail(clientId);
+    showToast('✓ Compra adicionada!');
+    return;
+  }
+  
   var tel = document.getElementById('fTelefone').value.trim();
   if(!tel) { showToast('⚠ Telefone é obrigatório'); return; }
 
