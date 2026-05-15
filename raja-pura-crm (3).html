@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raja Pura — CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0C0906;--surface:#171210;--surface2:#211A13;--surface3:#2C2218;--gold:#C8913A;--gold-light:#E5B05A;--gold-dim:#7A5A1E;--cream:#F0E6D3;--muted:#7A6A55;--muted2:#4A3D2E;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif;min-height:100vh;}
+.header{background:var(--surface);border-bottom:1px solid var(--surface3);padding:0 24px;}
+.header-inner{max-width:900px;margin:0 auto;padding:20px 0;display:flex;justify-content:space-between;align-items:center;}
+.brand{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--cream);}
+.brand-sub{font-size:10px;letter-spacing:3px;color:var(--gold-dim);text-transform:uppercase;margin-bottom:2px;}
+.conn{font-size:11px;color:var(--muted);}
+.main{max-width:900px;margin:0 auto;padding:24px;}
+.toolbar{display:flex;gap:12px;margin-bottom:20px;align-items:center;flex-wrap:wrap;}
+.search{flex:1;min-width:180px;padding:10px 14px;background:var(--surface);border:1px solid var(--surface3);border-radius:10px;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;}
+.search:focus{border-color:var(--gold-dim);}
+.filt{padding:10px 14px;background:var(--surface);border:1px solid var(--surface3);border-radius:10px;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;cursor:pointer;}
+.btn-novo{padding:10px 20px;background:var(--gold);border:none;border-radius:10px;color:#0C0906;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;}
+.client-card{background:var(--surface);border-radius:12px;padding:16px 20px;border:1px solid var(--surface3);cursor:pointer;transition:all .2s;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.client-card:hover{border-color:var(--gold-dim);transform:translateY(-1px);}
+.cname{font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--cream);}
+.cphone{font-size:12px;color:var(--muted);margin-top:2px;}
+.badges{display:flex;gap:8px;align-items:center;}
+.badge{font-size:10px;padding:3px 10px;border-radius:99px;}
+.bg{background:rgba(200,145,58,.15);color:var(--gold);}
+.bb{background:rgba(90,138,181,.15);color:#7AAAD5;}
+.bv{background:rgba(90,158,90,.15);color:#8DC47A;}
+/* DETAIL */
+.detail{display:none;}
+.back{padding:8px 16px;background:transparent;border:1px solid var(--surface3);border-radius:8px;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;margin-bottom:20px;}
+.dcard{background:var(--surface);border-radius:14px;padding:24px;border:1px solid var(--surface3);margin-bottom:16px;}
+.dname{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--cream);margin-bottom:4px;}
+.dphone{font-size:14px;color:var(--muted);margin-bottom:12px;}
+.dmeta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+.dactions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+.btn-edit{padding:9px 18px;background:transparent;border:1px solid var(--gold-dim);border-radius:9px;color:var(--gold);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;}
+.btn-compra{padding:9px 22px;background:var(--gold);border:none;border-radius:9px;color:#0C0906;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;}
+/* PROGRESS */
+.dots{display:flex;gap:6px;margin:8px 0;}
+.dot{width:34px;height:7px;border-radius:99px;background:var(--surface3);}
+.dot.on{background:var(--gold);}
+/* COMPRA ITEM */
+.ci{background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--surface3);}
+.ci-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.ci-num{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gold);}
+.ci-val{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--cream);}
+.ci-meta{font-size:12px;color:var(--muted);}
+.ci-desc{font-size:12px;color:var(--muted);margin-top:5px;}
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;}
+.overlay.open{display:flex;}
+.mbox{background:var(--surface);border-radius:18px;padding:28px;width:100%;max-width:520px;border:1px solid var(--gold-dim);box-shadow:0 40px 80px rgba(0,0,0,.6);margin:auto;}
+.mtitle{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--cream);margin-bottom:20px;}
+.fg{margin-bottom:13px;}
+.fl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px;}
+.fi{width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--surface3);border-radius:9px;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;}
+.fi:focus{border-color:var(--gold-dim);}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.mbtns{display:flex;gap:10px;margin-top:20px;}
+.bcancel{flex:1;padding:11px;background:transparent;border:1px solid var(--surface3);border-radius:9px;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;}
+.bsave{flex:2;padding:11px;background:var(--gold);border:none;border-radius:9px;color:#0C0906;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;}
+.bdel{padding:11px 14px;background:rgba(196,74,42,.15);border:1px solid rgba(196,74,42,.3);border-radius:9px;color:#E07050;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;}
+/* COMPRA FORM */
+.cpform{background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--surface3);}
+.cpform-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.cpnum{font-size:11px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;}
+.bremcp{padding:3px 10px;background:transparent;border:1px solid rgba(196,74,42,.3);border-radius:6px;color:#E07050;cursor:pointer;font-size:11px;}
+.baddcp{width:100%;padding:10px;background:transparent;border:1px dashed var(--gold-dim);border-radius:9px;color:var(--gold);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;margin-bottom:14px;}
+.irow{display:grid;grid-template-columns:1fr 2fr;gap:8px;margin-bottom:7px;}
+.badd-item{font-size:11px;padding:4px 10px;background:transparent;border:1px dashed var(--muted2);border-radius:6px;color:var(--muted);cursor:pointer;margin-bottom:8px;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#5A9E5A;color:white;padding:12px 24px;border-radius:99px;font-size:14px;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;}
+.toast.show{opacity:1;}
+.empty{text-align:center;padding:50px 20px;color:var(--muted);font-style:italic;}
+@media(max-width:600px){.frow{grid-template-columns:1fr;}.badges{display:none;}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-inner">
+    <div>
+      <div class="brand-sub">Raja Pura</div>
+      <div class="brand">CRM — Clientes</div>
+    </div>
+    <div class="conn" id="connEl">A ligar...</div>
+  </div>
+</div>
+<div class="main">
+  <div id="vLista">
+    <div class="toolbar">
+      <input class="search" id="sInput" type="text" placeholder="🔍 Nome ou telefone..." oninput="renderLista()">
+      <select class="filt" id="fCanal" onchange="renderLista()">
+        <option value="">Todos os canais</option>
+        <option value="loja">Loja</option>
+        <option value="online">Online</option>
+        <option value="instagram">Instagram</option>
+        <option value="whatsapp">WhatsApp</option>
+        <option value="etsy">Etsy</option>
+      </select>
+      <button class="btn-novo" onclick="openNovo()">+ Novo Cliente</button>
+    </div>
+    <div id="cList"></div>
+  </div>
+  <div id="vDetail" class="detail">
+    <button class="back" onclick="goLista()">← Voltar à lista</button>
+    <div id="dContent"></div>
+  </div>
+</div>
+
+<div class="overlay" id="modal" onclick="if(event.target.id==='modal')closeModal()">
+  <div class="mbox">
+    <div class="mtitle" id="mTitle">Novo Cliente</div>
+    <div id="pFields">
+      <div class="frow">
+        <div class="fg"><label class="fl">Telefone *</label><input class="fi" id="fTel" type="tel" placeholder="+351 9xx xxx xxx"></div>
+        <div class="fg"><label class="fl">Nome</label><input class="fi" id="fNome" type="text" placeholder="Nome completo"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Email</label><input class="fi" id="fEmail" type="email" placeholder="email@..."></div>
+        <div class="fg"><label class="fl">País</label><input class="fi" id="fPais" type="text" placeholder="Portugal"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Canal</label>
+          <select class="fi" id="fCanal2">
+            <option value="loja">Loja</option><option value="online">Online</option>
+            <option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option><option value="etsy">Etsy</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Registado por</label>
+          <select class="fi" id="fReg">
+            <option>Eduardo</option><option>Zélia</option><option>Catarina</option>
+            <option>Joana</option><option>Patrícia</option><option>Vera</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">Notas</label><input class="fi" id="fNotas" type="text" placeholder="Preferências, observações..."></div>
+    </div>
+    <div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 10px">Compras</div>
+      <div id="cpForm"></div>
+      <button class="baddcp" onclick="addCp()">+ Adicionar Compra</button>
+    </div>
+    <div class="mbtns">
+      <button class="bcancel" onclick="closeModal()">Cancelar</button>
+      <button class="bdel" id="bDel" style="display:none" onclick="delCliente()">Apagar</button>
+      <button class="bsave" onclick="save()">Guardar</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+var SCRIPT = 'https://script.google.com/macros/s/AKfycbz0s1O9FBlighyTKVp-rrnv8fLTIwBca_J026CM0HG3AEM1YNiKVOJZA6GllMkJuqsT/exec';
+var MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+var clientes=[], editId=null, novaCompraId=null, cps=[];
+
+function today(){return new Date().toISOString().split('T')[0];}
+function fmt(v){return '€'+Number(v||0).toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtD(d){if(!d)return'—';var p=d.split('-');return p[2]+' '+MESES[parseInt(p[1])-1]+' '+p[0];}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);}
+function saveLocal(){try{localStorage.setItem('rp_crm3',JSON.stringify(clientes));}catch(e){}}
+function loadLocal(){try{var d=localStorage.getItem('rp_crm3');if(d)clientes=JSON.parse(d);}catch(e){}}
+
+window.onload=function(){
+  loadLocal();
+  renderLista();
+  fetch(SCRIPT+'?action=get').then(function(r){return r.json();}).then(function(data){
+    if(data.clientes&&data.clientes.length>=0){
+      clientes=data.clientes;
+      saveLocal();
+      document.getElementById('connEl').textContent='✓ Ligado · '+clientes.length+' clientes';
+      renderLista();
+    }
+  }).catch(function(){
+    document.getElementById('connEl').textContent='Offline — dados locais';
+  });
+};
+
+function goLista(){
+  document.getElementById('vLista').style.display='';
+  document.getElementById('vDetail').style.display='none';
+  renderLista();
+}
+
+function goDetail(id){
+  document.getElementById('vLista').style.display='none';
+  document.getElementById('vDetail').style.display='';
+  renderDetail(id);
+}
+
+function renderLista(){
+  var q=(document.getElementById('sInput').value||'').toLowerCase();
+  var fc=document.getElementById('fCanal').value;
+  var f=clientes.filter(function(c){
+    return (!q||(c.nome&&c.nome.toLowerCase().includes(q))||(c.telefone&&c.telefone.includes(q)))&&(!fc||c.canal===fc);
+  }).sort(function(a,b){return(a.nome||'').localeCompare(b.nome||'');});
+  var el=document.getElementById('cList');
+  if(!f.length){el.innerHTML='<div class="empty">Nenhum cliente encontrado</div>';return;}
+  window._filteredIds = f.map(function(c){return c.id;});
+  el.innerHTML=f.map(function(c,idx){
+    var nc=(c.compras||[]).length;
+    var tot=(c.compras||[]).reduce(function(s,p){return s+Number(p.valor||0);},0);
+    return '<div class="client-card" onclick="goDetail(window._filteredIds['+idx+'])">'+
+      '<div><div class="cname">'+(c.nome||'— Sem nome')+'</div><div class="cphone">📞 '+(c.telefone||'—')+(c.pais?' · '+c.pais:'')+'</div></div>'+
+      '<div class="badges">'+
+      '<span class="badge bg">'+nc+' compra'+(nc!==1?'s':'')+'</span>'+
+      '<span class="badge bb">'+(c.canal||'loja')+'</span>'+
+      (tot>0?'<span class="badge bv">'+fmt(tot)+'</span>':'')+
+      '</div></div>';
+  }).join('');
+}
+
+function renderDetail(id){
+  window._currentDetailId=id;
+  var c=clientes.find(function(x){return x.id===id;});
+  if(!c){goLista();return;}
+  var cps2=c.compras||[];
+  var tot=cps2.reduce(function(s,p){return s+Number(p.valor||0);},0);
+  var cycle=cps2.length%5, completed=Math.floor(cps2.length/5);
+
+  var h='<div class="dcard">'+
+    '<div class="dname">'+(c.nome||'— Sem nome')+'</div>'+
+    '<div class="dphone">📞 '+(c.telefone||'—')+'</div>'+
+    '<div class="dmeta">';
+  if(c.email)h+='<span class="badge bb">✉ '+c.email+'</span>';
+  if(c.pais)h+='<span class="badge bg">🌍 '+c.pais+'</span>';
+  if(c.canal)h+='<span class="badge bv">'+c.canal+'</span>';
+  if(c.registadoPor)h+='<span class="badge" style="background:var(--surface2);color:var(--muted)">👤 '+c.registadoPor+'</span>';
+  h+='</div>';
+
+  // Progress bar
+  h+='<div style="margin:12px 0"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px"><span>Progresso para desconto 15%</span><span>'+cps2.length+' compra'+(cps2.length!==1?'s':'')+'</span></div><div class="dots">';
+  for(var i=0;i<5;i++)h+='<div class="dot'+(i<cycle?' on':'')+'"></div>';
+  h+='</div>';
+  if(cycle===0&&cps2.length>0)h+='<div style="font-size:12px;color:var(--gold);font-weight:600;margin-top:6px">🎉 Desconto 15% conquistado '+(completed>1?completed+' vezes':'')+'!</div>';
+  else if(cycle>0)h+='<div style="font-size:11px;color:var(--muted);margin-top:5px">Faltam '+(5-cycle)+' compra'+(5-cycle!==1?'s':'')+' para 15% de desconto</div>';
+  h+='</div>';
+
+  if(c.notas)h+='<div style="font-size:13px;color:var(--muted);padding:10px 0;border-top:1px solid var(--surface3)">'+c.notas+'</div>';
+  h+='<div style="padding-top:12px;border-top:1px solid var(--surface3);display:flex;justify-content:space-between;align-items:center;margin-top:8px">'+
+    '<span style="font-size:12px;color:var(--muted)">Total gasto</span>'+
+    '<span style="font-family:Cormorant Garamond,serif;font-size:22px;color:var(--gold)">'+fmt(tot)+'</span></div>';
+  h+='<div class="dactions">'+
+    '<button class="btn-edit" onclick="openEditar(\''+id+'\')">✏ Editar</button>'+
+    '<button class="btn-compra" onclick="openNovaCompra(\''+id+'\')">+ Nova Compra</button>'+
+    '</div></div>';
+
+  // Histórico
+  h+='<div class="dcard"><div style="font-family:Cormorant Garamond,serif;font-size:18px;color:var(--cream);margin-bottom:14px">Histórico de Compras</div>';
+  if(!cps2.length){
+    h+='<div class="empty" style="padding:20px">Sem compras registadas ainda.<br>Clica em "+ Nova Compra" para adicionar.</div>';
+  } else {
+    var sorted=cps2.slice().reverse();
+    sorted.forEach(function(p,i){
+      var num=cps2.length-i;
+      var is15=num%5===0;
+      h+='<div class="ci">'+
+        '<div class="ci-top"><span class="ci-num">Compra #'+num+(is15?' 🎉 15% desc.':'')+'</span><span class="ci-val">'+fmt(p.valor)+'</span></div>'+
+        '<div class="ci-meta">'+fmtD(p.data)+(p.canal?' · '+p.canal:'')+(p.registadoPor?' · '+p.registadoPor:'')+'</div>';
+      if(p.items&&p.items.length)h+='<div class="ci-desc">'+p.items.filter(function(it){return it.descricao||it.referencia;}).map(function(it){return(it.referencia?'['+it.referencia+'] ':'')+it.descricao;}).join(' · ')+'</div>';
+      if(p.obs)h+='<div style="font-size:12px;color:var(--muted);margin-top:4px;font-style:italic">'+p.obs+'</div>';
+      h+='</div>';
+    });
+  }
+  h+='</div>';
+  document.getElementById('dContent').innerHTML=h;
+}
+
+// MODAL
+function openNovo(){
+  editId=null;novaCompraId=null;cps=[];
+  document.getElementById('mTitle').textContent='Novo Cliente';
+  document.getElementById('bDel').style.display='none';
+  document.getElementById('pFields').style.display='';
+  document.getElementById('fTel').value='';
+  document.getElementById('fNome').value='';
+  document.getElementById('fEmail').value='';
+  document.getElementById('fPais').value='';
+  document.getElementById('fCanal2').value='loja';
+  document.getElementById('fReg').value='Eduardo';
+  document.getElementById('fNotas').value='';
+  renderCpForm();
+  document.getElementById('modal').classList.add('open');
+}
+
+function openEditar(id){
+  var c=clientes.find(function(x){return x.id===id;});
+  if(!c)return;
+  editId=id;novaCompraId=null;
+  cps=(c.compras||[]).map(function(p){return Object.assign({},p,{items:(p.items||[{referencia:'',descricao:''}]).slice()});});
+  document.getElementById('mTitle').textContent='Editar Cliente';
+  document.getElementById('bDel').style.display='';
+  document.getElementById('pFields').style.display='';
+  document.getElementById('fTel').value=c.telefone||'';
+  document.getElementById('fNome').value=c.nome||'';
+  document.getElementById('fEmail').value=c.email||'';
+  document.getElementById('fPais').value=c.pais||'';
+  document.getElementById('fCanal2').value=c.canal||'loja';
+  document.getElementById('fReg').value=c.registadoPor||'Eduardo';
+  document.getElementById('fNotas').value=c.notas||'';
+  renderCpForm();
+  document.getElementById('modal').classList.add('open');
+}
+
+function openNovaCompra(id){
+  var c=clientes.find(function(x){return x.id===id;});
+  if(!c)return;
+  editId=null;novaCompraId=id;
+  cps=[{id:String(Date.now()),data:today(),canal:'loja',registadoPor:'Eduardo',items:[{referencia:'',descricao:''}],valor:'',obs:''}];
+  document.getElementById('mTitle').textContent='Nova Compra — '+(c.nome||c.telefone);
+  document.getElementById('bDel').style.display='none';
+  document.getElementById('pFields').style.display='none';
+  renderCpForm();
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal(){
+  document.getElementById('modal').classList.remove('open');
+  document.getElementById('pFields').style.display='';
+  editId=null;novaCompraId=null;cps=[];
+}
+
+function addCp(){
+  cps.push({id:String(Date.now()),data:today(),canal:'loja',registadoPor:'Eduardo',items:[{referencia:'',descricao:''}],valor:'',obs:''});
+  renderCpForm();
+}
+
+function remCp(i){cps.splice(i,1);renderCpForm();}
+
+function addItem(ci){
+  if(!cps[ci].items)cps[ci].items=[];
+  cps[ci].items.push({referencia:'',descricao:''});
+  renderCpForm();
+}
+
+function renderCpForm(){
+  var h='';
+  cps.forEach(function(p,i){
+    if(!p.items||!p.items.length)p.items=[{referencia:'',descricao:''}];
+    h+='<div class="cpform"><div class="cpform-top"><span class="cpnum">Compra '+(i+1)+'</span>';
+    if(cps.length>1||novaCompraId)h+='<button class="bremcp" onclick="remCp('+i+')">× Remover</button>';
+    h+='</div>'+
+      '<div class="frow"><div class="fg"><label class="fl">Data</label><input class="fi" id="cd_'+i+'" type="date" value="'+(p.data||today())+'"></div>'+
+      '<div class="fg"><label class="fl">Canal</label><select class="fi" id="cc_'+i+'"><option value="loja"'+(p.canal==='loja'?' selected':'')+'>Loja</option><option value="online"'+(p.canal==='online'?' selected':'')+'>Online</option><option value="instagram"'+(p.canal==='instagram'?' selected':'')+'>Instagram</option><option value="whatsapp"'+(p.canal==='whatsapp'?' selected':'')+'>WhatsApp</option><option value="etsy"'+(p.canal==='etsy'?' selected':'')+'>Etsy</option></select></div></div>'+
+      '<div style="margin-bottom:8px"><div class="fl" style="margin-bottom:5px">Artigos</div>';
+    p.items.forEach(function(it,j){
+      h+='<div class="irow"><input class="fi" id="cr_'+i+'_'+j+'" type="text" placeholder="Ref." value="'+(it.referencia||'')+'"><input class="fi" id="cd2_'+i+'_'+j+'" type="text" placeholder="Descrição do artigo" value="'+(it.descricao||'')+'"></div>';
+    });
+    h+='<button class="badd-item" onclick="addItem('+i+')">+ artigo</button></div>'+
+      '<div class="frow"><div class="fg"><label class="fl">Valor (€)</label><input class="fi" id="cv_'+i+'" type="number" step="0.01" placeholder="0.00" value="'+(p.valor||'')+'"></div>'+
+      '<div class="fg"><label class="fl">Registado por</label><select class="fi" id="creg_'+i+'"><option'+(p.registadoPor==='Eduardo'?' selected':'')+'>Eduardo</option><option'+(p.registadoPor==='Zélia'?' selected':'')+'>Zélia</option><option'+(p.registadoPor==='Catarina'?' selected':'')+'>Catarina</option><option'+(p.registadoPor==='Joana'?' selected':'')+'>Joana</option><option'+(p.registadoPor==='Patrícia'?' selected':'')+'>Patrícia</option><option'+(p.registadoPor==='Vera'?' selected':'')+'>Vera</option></select></div></div>'+
+      '<div class="fg"><label class="fl">Observações</label><input class="fi" id="co_'+i+'" type="text" placeholder="Notas..." value="'+(p.obs||'')+'"></div>'+
+      '</div>';
+  });
+  document.getElementById('cpForm').innerHTML=h;
+}
+
+function collectCps(){
+  return cps.map(function(p,i){
+    var items=p.items.map(function(it,j){
+      return {referencia:(document.getElementById('cr_'+i+'_'+j)||{value:''}).value.trim(),descricao:(document.getElementById('cd2_'+i+'_'+j)||{value:''}).value.trim()};
+    }).filter(function(it){return it.referencia||it.descricao;});
+    return {
+      id:p.id||String(Date.now()+i),
+      data:(document.getElementById('cd_'+i)||{value:today()}).value||today(),
+      canal:(document.getElementById('cc_'+i)||{value:'loja'}).value,
+      registadoPor:(document.getElementById('creg_'+i)||{value:'Eduardo'}).value,
+      items:items,
+      valor:Number((document.getElementById('cv_'+i)||{value:0}).value||0),
+      obs:(document.getElementById('co_'+i)||{value:''}).value.trim()
+    };
+  });
+}
+
+function save(){
+  // Nova compra para cliente existente
+  if(novaCompraId){
+    var c=clientes.find(function(x){return x.id===novaCompraId;});
+    if(!c)return;
+    if(!c.compras)c.compras=[];
+    collectCps().forEach(function(cp){c.compras.push(cp);});
+    saveLocal();
+    fetch(SCRIPT,{method:'POST',body:JSON.stringify({action:'saveCliente',cliente:c})}).catch(function(){});
+    closeModal();
+    goDetail(novaCompraId);
+    toast('✓ Compra adicionada!');
+    return;
+  }
+  var tel=document.getElementById('fTel').value.trim();
+  if(!tel){toast('⚠ Telefone obrigatório');return;}
+  var dup=clientes.find(function(c){return c.telefone===tel&&c.id!==editId;});
+  if(dup){toast('⚠ Telefone já existe');return;}
+  var cpData=collectCps();
+  if(editId){
+    var c=clientes.find(function(x){return x.id===editId;});
+    if(!c)return;
+    c.telefone=tel;c.nome=document.getElementById('fNome').value.trim();
+    c.email=document.getElementById('fEmail').value.trim();c.pais=document.getElementById('fPais').value.trim();
+    c.canal=document.getElementById('fCanal2').value;c.registadoPor=document.getElementById('fReg').value;
+    c.notas=document.getElementById('fNotas').value.trim();c.compras=cpData;
+    saveLocal();
+    fetch(SCRIPT,{method:'POST',body:JSON.stringify({action:'saveCliente',cliente:c})}).catch(function(){});
+    closeModal();goDetail(editId);toast('✓ Cliente atualizado!');
+  } else {
+    var novo={id:String(Date.now()),telefone:tel,nome:document.getElementById('fNome').value.trim(),
+      email:document.getElementById('fEmail').value.trim(),pais:document.getElementById('fPais').value.trim(),
+      canal:document.getElementById('fCanal2').value,registadoPor:document.getElementById('fReg').value,
+      notas:document.getElementById('fNotas').value.trim(),compras:cpData,criadoEm:today()};
+    clientes.push(novo);saveLocal();
+    fetch(SCRIPT,{method:'POST',body:JSON.stringify({action:'saveCliente',cliente:novo})}).catch(function(){});
+    closeModal();goDetail(novo.id);toast('✓ Cliente criado!');
+  }
+}
+
+function delCliente(){
+  if(!editId||!confirm('Apagar este cliente e todas as suas compras?'))return;
+  clientes=clientes.filter(function(c){return c.id!==editId;});
+  saveLocal();
+  fetch(SCRIPT,{method:'POST',body:JSON.stringify({action:'deleteCliente',id:editId})}).catch(function(){});
+  closeModal();goLista();toast('Cliente apagado');
+}
+</script>
+</body>
+</html>
