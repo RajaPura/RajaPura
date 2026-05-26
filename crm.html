@@ -497,20 +497,30 @@ function renderLTV(){
     var primCompra = datas[0];
     var ultCompra = datas[datas.length-1];
 
-    // Meses como cliente
-    var mesesCliente = Math.max(1, Math.round((hoje - primCompra) / (1000*60*60*24*30)));
+    // Anos como cliente (minimo 1 mes = 0.083 anos)
+    var anosCliente = Math.max(0.083, (hoje - primCompra) / (1000*60*60*24*365));
+    var mesesCliente = Math.round(anosCliente * 12);
+    if(mesesCliente < 1) mesesCliente = 1;
 
-    // Frequencia: compras por mes
-    var freqMensal = cps2.length / mesesCliente;
+    // Transacoes por ano
+    var transacoesAno = cps2.length / anosCliente;
 
-    // LTV projetado 12 meses
-    var ltv12 = ticket * freqMensal * 12;
+    // LTV = Ticket Medio x Transacoes/Ano x Anos de relacionamento
+    var ltv = ticket * transacoesAno * anosCliente;
+
+    // LTV projetado para o futuro (usando media de anos = 2 anos padrao ou anos reais se maior)
+    var anosProjecao = Math.max(anosCliente, 2);
+    var ltv12 = ticket * transacoesAno * anosProjecao;
+
+    // Frequencia mensal para mostrar
+    var freqMensal = transacoesAno / 12;
 
     // Dias desde ultima compra
     var diasDesdeUltima = Math.round((hoje - ultCompra) / (1000*60*60*24));
 
     return {c:c, ltv:ltv, ticket:ticket, nc:cps2.length, mesesCliente:mesesCliente,
-      freqMensal:freqMensal, ltv12:ltv12, diasDesdeUltima:diasDesdeUltima,
+      freqMensal:freqMensal, transacoesAno:transacoesAno, anosCliente:anosCliente,
+      ltv12:ltv12, diasDesdeUltima:diasDesdeUltima,
       primCompra:primCompra, ultCompra:ultCompra};
   }).filter(function(d){return d !== null;}).sort(function(a,b){return b.ltv12-a.ltv12;});
 
@@ -560,11 +570,13 @@ function renderLTV(){
       html += '</div>';
 
       // Métricas
+      // Formula: LTV = Ticket Medio x Transacoes/Ano x Anos
+      html += '<div style="font-size:10px;color:var(--muted);margin-bottom:6px">LTV = Ticket Médio × Trans./Ano × Anos de relação</div>';
       html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px">';
-      html += '<div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:3px">LTV Real</div><div style="font-size:13px;color:var(--cream);font-weight:600">€'+fmtV(d.ltv)+'</div></div>';
       html += '<div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:3px">Ticket Médio</div><div style="font-size:13px;color:var(--cream);font-weight:600">€'+fmtV(d.ticket)+'</div></div>';
-      html += '<div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:3px">Freq/Mês</div><div style="font-size:13px;color:var(--cream);font-weight:600">'+d.freqMensal.toFixed(1)+'x</div></div>';
-      html += '<div style="background:rgba(200,145,58,.1);border-radius:8px;padding:8px;text-align:center;border:1px solid var(--gold-dim)"><div style="font-size:9px;color:var(--gold);text-transform:uppercase;margin-bottom:3px">LTV 12m</div><div style="font-size:13px;color:var(--gold);font-weight:700">€'+fmtV(d.ltv12)+'</div></div>';
+      html += '<div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:3px">Trans./Ano</div><div style="font-size:13px;color:var(--cream);font-weight:600">'+d.transacoesAno.toFixed(1)+'x</div></div>';
+      html += '<div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:3px">Anos Relação</div><div style="font-size:13px;color:var(--cream);font-weight:600">'+d.anosCliente.toFixed(1)+'</div></div>';
+      html += '<div style="background:rgba(200,145,58,.1);border-radius:8px;padding:8px;text-align:center;border:1px solid var(--gold-dim)"><div style="font-size:9px;color:var(--gold);text-transform:uppercase;margin-bottom:3px">LTV</div><div style="font-size:13px;color:var(--gold);font-weight:700">€'+fmtV(d.ltv)+'</div></div>';
       html += '</div>';
 
       // Barra de progresso
