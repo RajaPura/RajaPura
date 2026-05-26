@@ -175,9 +175,9 @@ function renderLista(){
   var el = document.getElementById('mainContent');
   el.innerHTML = '';
 
-  // Toolbar
-  var toolbar = document.createElement('div');
-  toolbar.className = 'toolbar';toolbar.style.flexWrap='wrap';
+  // Linha 1: pesquisa e filtro
+  var linha1 = document.createElement('div');
+  linha1.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;';
 
   var search = document.createElement('input');
   search.className = 'search';
@@ -185,42 +185,47 @@ function renderLista(){
   search.type = 'text';
   search.placeholder = '🔍 Pesquisar...';
   search.oninput = renderLista;
-  toolbar.appendChild(search);
+  linha1.appendChild(search);
 
   var filtro = document.createElement('select');
   filtro.className = 'filt';
   filtro.id = 'fCanalF';
   filtro.onchange = renderLista;
   filtro.innerHTML = '<option value="">Todos os canais</option><option value="loja">Loja</option><option value="online">Online</option><option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option><option value="etsy">Etsy</option>';
-  toolbar.appendChild(filtro);
+  linha1.appendChild(filtro);
+  el.appendChild(linha1);
+
+  // Linha 2: botões de ação
+  var linha2 = document.createElement('div');
+  linha2.style.cssText = 'display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;';
 
   var bNovo = document.createElement('button');
   bNovo.className = 'btn-g';
-  bNovo.textContent = '+ Novo';
+  bNovo.textContent = '+ Novo Cliente';
   bNovo.onclick = openNovo;
-  toolbar.appendChild(bNovo);
+  linha2.appendChild(bNovo);
 
   var bExp = document.createElement('button');
   bExp.className = 'btn-o';
-  bExp.textContent = '⬇ CSV';
+  bExp.textContent = '⬇ Exportar';
   bExp.onclick = exportar;
-  toolbar.appendChild(bExp);
+  linha2.appendChild(bExp);
 
   var bLTV = document.createElement('button');
   bLTV.className = 'btn-o';
   bLTV.textContent = '📊 LTV';
   bLTV.onclick = verLTV;
-  toolbar.appendChild(bLTV);
+  linha2.appendChild(bLTV);
 
   var bSeg = document.createElement('button');
   bSeg.className = 'btn-o';
-  bSeg.textContent = '🎯 Seg.';
+  bSeg.textContent = '🎯 Segmentos';
   bSeg.onclick = verSegmentos;
-  toolbar.appendChild(bSeg);
+  linha2.appendChild(bSeg);
 
-  el.appendChild(toolbar);
+  el.appendChild(linha2);
 
-  // Client list
+  // Lista de clientes
   var q = (search.value||'').toLowerCase();
   var fc = filtro.value||'';
 
