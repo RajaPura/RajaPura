@@ -150,6 +150,8 @@ window.onload = function(){
 function renderView(){
   if(currentView === 'lista'){
     renderLista();
+  } else if(currentView === 'ltv'){
+    renderLTV();
   } else {
     renderDetalhe(currentDetailId);
   }
@@ -190,6 +192,12 @@ function renderLista(){
   btnExp.textContent = '⬇ Exportar';
   btnExp.onclick = exportar;
   toolbar.appendChild(btnExp);
+
+  var btnLTV = document.createElement('button');
+  btnLTV.className = 'btn-o';
+  btnLTV.textContent = '📊 LTV';
+  btnLTV.onclick = verLTV;
+  toolbar.appendChild(btnLTV);
 
   el.innerHTML = '';
   el.appendChild(toolbar);
@@ -465,6 +473,116 @@ function delCliente(){
   saveLocal();
   fetch(SCRIPT,{method:'POST',body:JSON.stringify({action:'deleteCliente',id:editId})}).catch(function(){});
   closeModal();verLista();toast('Cliente apagado');
+}
+
+function verLTV(){
+  currentView = 'ltv';
+  currentDetailId = null;
+  renderLTV();
+}
+
+function renderLTV(){
+  var el = document.getElementById('mainContent');
+  var hoje = new Date();
+
+  var dados = clientes.map(function(c){
+    var cps2 = c.compras || [];
+    if(!cps2.length) return null;
+
+    var ltv = cps2.reduce(function(s,p){return s+Number(String(p.valor||0).replace(',','.'));},0);
+    var ticket = ltv / cps2.length;
+
+    // Datas das compras
+    var datas = cps2.map(function(p){return new Date(p.data||'2026-01-01');}).sort(function(a,b){return a-b;});
+    var primCompra = datas[0];
+    var ultCompra = datas[datas.length-1];
+
+    // Meses como cliente
+    var mesesCliente = Math.max(1, Math.round((hoje - primCompra) / (1000*60*60*24*30)));
+
+    // Frequencia: compras por mes
+    var freqMensal = cps2.length / mesesCliente;
+
+    // LTV projetado 12 meses
+    var ltv12 = ticket * freqMensal * 12;
+
+    // Dias desde ultima compra
+    var diasDesdeUltima = Math.round((hoje - ultCompra) / (1000*60*60*24));
+
+    return {c:c, ltv:ltv, ticket:ticket, nc:cps2.length, mesesCliente:mesesCliente,
+      freqMensal:freqMensal, ltv12:ltv12, diasDesdeUltima:diasDesdeUltima,
+      primCompra:primCompra, ultCompra:ultCompra};
+  }).filter(function(d){return d !== null;}).sort(function(a,b){return b.ltv12-a.ltv12;});
+
+  var totalLTV = dados.reduce(function(s,d){return s+d.ltv;},0);
+  var avgTicket = dados.length > 0 ? dados.reduce(function(s,d){return s+d.ticket;},0)/dados.length : 0;
+  var avgFreq = dados.length > 0 ? dados.reduce(function(s,d){return s+d.freqMensal;},0)/dados.length : 0;
+  var maxLTV12 = dados.length > 0 ? dados[0].ltv12 : 1;
+
+  var html = '<button class="back" onclick="verLista()">← Voltar à lista</button>';
+
+  // KPIs
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px">';
+  html += '<div class="dc" style="text-align:center"><div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">LTV Total</div><div style="font-family:Cormorant Garamond,serif;font-size:26px;color:var(--gold)">€'+fmtV(totalLTV)+'</div></div>';
+  html += '<div class="dc" style="text-align:center"><div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Ticket Médio</div><div style="font-family:Cormorant Garamond,serif;font-size:26px;color:var(--gold)">€'+fmtV(avgTicket)+'</div></div>';
+  html += '<div class="dc" style="text-align:center"><div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Freq. Média</div><div style="font-family:Cormorant Garamond,serif;font-size:26px;color:var(--gold)">'+avgFreq.toFixed(1)+'/mês</div></div>';
+  html += '<div class="dc" style="text-align:center"><div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Clientes Ativos</div><div style="font-family:Cormorant Garamond,serif;font-size:26px;color:var(--gold)">'+dados.length+'</div></div>';
+  html += '</div>';
+
+  // Ranking
+  html += '<div class="dc"><div style="font-family:Cormorant Garamond,serif;font-size:20px;color:var(--cream);margin-bottom:4px">🏆 Ranking LTV — Projeção 12 meses</div>';
+  html += '<div style="font-size:12px;color:var(--muted);margin-bottom:16px">Ordenado por valor projetado para os próximos 12 meses</div>';
+
+  if(!dados.length){
+    html += '<div class="empty">Sem clientes com compras</div>';
+  } else {
+    dados.forEach(function(d, i){
+      var pct = maxLTV12 > 0 ? Math.round((d.ltv12/maxLTV12)*100) : 0;
+      var medalha = i===0?'🥇':i===1?'🥈':i===2?'🥉':'<span style="font-size:13px;color:var(--muted);font-weight:600">#'+(i+1)+'</span>';
+
+      // Status do cliente
+      var status, statusColor;
+      if(d.diasDesdeUltima <= 30){ status='Ativo'; statusColor='#8DC47A'; }
+      else if(d.diasDesdeUltima <= 90){ status='Morno'; statusColor='var(--gold)'; }
+      else { status='Inativo'; statusColor='#E07050'; }
+
+      html += '<div style="margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid var(--surface3);cursor:pointer" class="ltv-row" id="ltv-'+d.c.id+'">';
+
+      // Header
+      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">';
+      html += '<div style="display:flex;align-items:center;gap:10px">';
+      html += '<span style="font-size:18px">'+medalha+'</span>';
+      html += '<div>';
+      html += '<div style="font-size:14px;color:var(--cream);font-weight:500">'+(d.c.nome||'Sem nome')+'</div>';
+      html += '<div style="font-size:11px;color:var(--muted)">Cliente há '+d.mesesCliente+' mês'+(d.mesesCliente!==1?'es':'')+' · Última compra há '+d.diasDesdeUltima+' dias</div>';
+      html += '</div></div>';
+      html += '<span style="font-size:11px;padding:3px 10px;border-radius:99px;background:'+statusColor+'22;color:'+statusColor+'">'+status+'</span>';
+      html += '</div>';
+
+      // Métricas
+      html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px">';
+      html += '<div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:3px">LTV Real</div><div style="font-size:13px;color:var(--cream);font-weight:600">€'+fmtV(d.ltv)+'</div></div>';
+      html += '<div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:3px">Ticket Médio</div><div style="font-size:13px;color:var(--cream);font-weight:600">€'+fmtV(d.ticket)+'</div></div>';
+      html += '<div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:3px">Freq/Mês</div><div style="font-size:13px;color:var(--cream);font-weight:600">'+d.freqMensal.toFixed(1)+'x</div></div>';
+      html += '<div style="background:rgba(200,145,58,.1);border-radius:8px;padding:8px;text-align:center;border:1px solid var(--gold-dim)"><div style="font-size:9px;color:var(--gold);text-transform:uppercase;margin-bottom:3px">LTV 12m</div><div style="font-size:13px;color:var(--gold);font-weight:700">€'+fmtV(d.ltv12)+'</div></div>';
+      html += '</div>';
+
+      // Barra de progresso
+      html += '<div style="background:var(--surface3);border-radius:99px;height:4px;overflow:hidden">';
+      html += '<div style="width:'+pct+'%;height:100%;background:var(--gold);border-radius:99px"></div>';
+      html += '</div>';
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+  el.innerHTML = html;
+
+  // Click handlers
+  var rows = el.querySelectorAll('.ltv-row');
+  rows.forEach(function(row){
+    var cid = row.id.replace('ltv-','');
+    row.addEventListener('click', function(){ verDetalhe(cid); });
+  });
 }
 
 function exportar(){
