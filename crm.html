@@ -502,15 +502,17 @@ function renderLTV(){
     var mesesCliente = Math.round(anosCliente * 12);
     if(mesesCliente < 1) mesesCliente = 1;
 
-    // Transacoes por ano
-    var transacoesAno = cps2.length / anosCliente;
+    // Transacoes reais feitas
+    var transacoesReais = cps2.length;
 
-    // LTV = Ticket Medio x Transacoes/Ano x Anos de relacionamento
-    var ltv = ticket * transacoesAno * anosCliente;
+    // Transacoes por ano (ritmo actual)
+    var transacoesAno = transacoesReais / anosCliente;
 
-    // LTV projetado para o futuro (usando media de anos = 2 anos padrao ou anos reais se maior)
-    var anosProjecao = Math.max(anosCliente, 2);
-    var ltv12 = ticket * transacoesAno * anosProjecao;
+    // LTV = Ticket Medio x Transacoes reais x Anos de relacionamento
+    var ltv = ticket * transacoesReais;
+
+    // LTV projetado (ritmo actual x 2 anos)
+    var ltv12 = ticket * transacoesAno * 2;
 
     // Frequencia mensal para mostrar
     var freqMensal = transacoesAno / 12;
@@ -519,7 +521,7 @@ function renderLTV(){
     var diasDesdeUltima = Math.round((hoje - ultCompra) / (1000*60*60*24));
 
     return {c:c, ltv:ltv, ticket:ticket, nc:cps2.length, mesesCliente:mesesCliente,
-      freqMensal:freqMensal, transacoesAno:transacoesAno, anosCliente:anosCliente,
+      freqMensal:freqMensal, transacoesAno:transacoesAno, transacoesReais:transacoesReais, anosCliente:anosCliente,
       ltv12:ltv12, diasDesdeUltima:diasDesdeUltima,
       primCompra:primCompra, ultCompra:ultCompra};
   }).filter(function(d){return d !== null;}).sort(function(a,b){return b.ltv12-a.ltv12;});
@@ -571,10 +573,10 @@ function renderLTV(){
 
       // Métricas
       // Formula: LTV = Ticket Medio x Transacoes/Ano x Anos
-      html += '<div style="font-size:10px;color:var(--muted);margin-bottom:6px">LTV = Ticket Médio × Trans./Ano × Anos de relação</div>';
+      html += '<div style="font-size:10px;color:var(--muted);margin-bottom:6px">LTV = Ticket Médio × Nº Transações reais</div>';
       html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px">';
       html += '<div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:3px">Ticket Médio</div><div style="font-size:13px;color:var(--cream);font-weight:600">€'+fmtV(d.ticket)+'</div></div>';
-      html += '<div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:3px">Trans./Ano</div><div style="font-size:13px;color:var(--cream);font-weight:600">'+d.transacoesAno.toFixed(1)+'x</div></div>';
+      html += '<div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:3px">Transações</div><div style="font-size:13px;color:var(--cream);font-weight:600">'+d.transacoesReais+'x</div></div>';
       html += '<div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:3px">Anos Relação</div><div style="font-size:13px;color:var(--cream);font-weight:600">'+d.anosCliente.toFixed(1)+'</div></div>';
       html += '<div style="background:rgba(200,145,58,.1);border-radius:8px;padding:8px;text-align:center;border:1px solid var(--gold-dim)"><div style="font-size:9px;color:var(--gold);text-transform:uppercase;margin-bottom:3px">LTV</div><div style="font-size:13px;color:var(--gold);font-weight:700">€'+fmtV(d.ltv)+'</div></div>';
       html += '</div>';
