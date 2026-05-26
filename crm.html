@@ -219,7 +219,7 @@ function renderLista(){
 
   var bSeg = document.createElement('button');
   bSeg.className = 'btn-o';
-  bSeg.textContent = 'Seg.';
+  bSeg.textContent = '🎯 Segmentos';
   bSeg.onclick = verSegmentos;
   linha2.appendChild(bSeg);
 
@@ -278,7 +278,7 @@ function renderDetalhe(id){
   var tot = cps2.reduce(function(s,p){return s+Number(String(p.valor||0).replace(',','.'));},0);
   var cycle = cps2.length % 5;
 
-  var html = '';
+  var html = '<button class="back" onclick="verLista()">← Voltar à lista</button>';
 
   // Card principal
   html += '<div class="dc">';
@@ -653,27 +653,6 @@ function verLTV(){
 
 function renderLTV(){
   var el = document.getElementById('mainContent');
-  el.innerHTML = '';
-
-  // Back + Segmentos button
-  var topRow = document.createElement('div');
-  topRow.style.cssText = 'display:flex;gap:10px;margin-bottom:20px;align-items:center;';
-
-  var back = document.createElement('button');
-  back.className = 'back';
-  back.style.margin = '0';
-  back.textContent = '← Voltar';
-  back.onclick = verLista;
-  topRow.appendChild(back);
-
-  var bSeg = document.createElement('button');
-  bSeg.className = 'btn-o';
-  bSeg.textContent = '🎯 Ver Segmentos';
-  bSeg.onclick = verSegmentos;
-  topRow.appendChild(bSeg);
-
-  el.appendChild(topRow);
-
   var hoje = new Date();
 
   var dados = clientes.map(function(c){
@@ -722,7 +701,7 @@ function renderLTV(){
   var avgFreq = dados.length > 0 ? dados.reduce(function(s,d){return s+d.freqMensal;},0)/dados.length : 0;
   var maxLTV12 = dados.length > 0 ? dados[0].ltv12 : 1;
 
-  var html = '';
+  var html = '<button class="back" onclick="verLista()">← Voltar à lista</button>';
 
   // KPIs
   html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px">';
