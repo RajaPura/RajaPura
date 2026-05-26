@@ -157,8 +157,8 @@ window.onload=function(){
   }).catch(function(){document.getElementById('connEl').textContent='Offline';});
 };
 
-function goLista(){document.getElementById('vLista').style.display='';document.getElementById('vDetail').style.display='none';renderLista();}
-function goDetail(id){document.getElementById('vLista').style.display='none';document.getElementById('vDetail').style.display='';renderDetail(id);}
+function goLista(){document.getElementById('vLista').style.display='block';document.getElementById('vDetail').style.display='none';renderLista();}
+function goDetail(id){document.getElementById('vLista').style.display='none';document.getElementById('vDetail').style.display='block';renderDetail(id);}
 
 function renderLista(){
   var q=(document.getElementById('sInput').value||'').toLowerCase();
