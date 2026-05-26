@@ -112,7 +112,7 @@ body{background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif;mi
 <div class="toast" id="toast"></div>
 
 <script>
-var SCRIPT = 'https://script.google.com/macros/s/AKfycbww-VyJEkZibzoJwqooP2m1A8N9qIUjGWXXyVlzQLsCw6qww-bczKH456STj35YCzI/exec';
+var SCRIPT = 'https://script.google.com/macros/s/AKfycbym0lasbBoqIXZPMgPCjCR12RIieSu8ENc_cZA7n_h4eoRh6jiZUjWJdCzDXTzGwAzl/exec';
 var MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 var clientes = [], editId = null, novaCompraId = null, cps = [];
 var currentView = 'lista'; // 'lista' or 'detail'
@@ -152,6 +152,8 @@ function renderView(){
     renderLista();
   } else if(currentView === 'ltv'){
     renderLTV();
+  } else if(currentView === 'segmentos'){
+    renderSegmentos();
   } else {
     renderDetalhe(currentDetailId);
   }
@@ -198,6 +200,13 @@ function renderLista(){
   btnLTV.textContent = '📊 LTV';
   btnLTV.onclick = verLTV;
   toolbar.appendChild(btnLTV);
+
+  var btnSeg = document.createElement('button');
+  btnSeg.className = 'btn-o';
+  btnSeg.textContent = '🎯 Segmentos';
+  btnSeg.onclick = verSegmentos;
+  toolbar.appendChild(btnSeg);
+
 
   el.innerHTML = '';
   el.appendChild(toolbar);
@@ -474,6 +483,173 @@ function delCliente(){
   fetch(SCRIPT,{method:'POST',body:JSON.stringify({action:'deleteCliente',id:editId})}).catch(function(){});
   closeModal();verLista();toast('Cliente apagado');
 }
+
+function verSegmentos(){
+  currentView = 'segmentos';
+  currentDetailId = null;
+  renderSegmentos();
+}
+
+function getSegKey(c){
+  var cps2 = c.compras || [];
+  if(!cps2.length) return 'sem';
+  var datas = cps2.map(function(p){return new Date(p.data||'2026-01-01');}).sort(function(a,b){return b-a;});
+  var dias = Math.round((new Date() - datas[0]) / (1000*60*60*24));
+  if(dias <= 30) return 'ativo';
+  if(dias <= 90) return 'morno';
+  return 'inativo';
+}
+
+function renderSegmentos(){
+  var el = document.getElementById('mainContent');
+  el.innerHTML = '';
+
+  var SEGS = {
+    ativo:   {label:'Ativos',      emoji:'🟢', desc:'Compraram nos últimos 30 dias', cor:'#8DC47A'},
+    morno:   {label:'Mornos',      emoji:'🟡', desc:'Compraram há 31 a 90 dias',     cor:'#E5B05A'},
+    inativo: {label:'Inativos',    emoji:'🔴', desc:'Sem compra há mais de 90 dias', cor:'#C44A2A'},
+    sem:     {label:'Sem Compras', emoji:'⚪', desc:'Ainda sem compras registadas',   cor:'#7A6A55'}
+  };
+
+  var grupos = {ativo:[],morno:[],inativo:[],sem:[]};
+  var perto = [];
+
+  clientes.forEach(function(c){
+    var k = getSegKey(c);
+    grupos[k].push(c);
+    if((c.compras||[]).length % 5 === 4) perto.push(c);
+  });
+
+  // Back button
+  var back = document.createElement('button');
+  back.className = 'back';
+  back.textContent = '← Voltar à lista';
+  back.onclick = verLista;
+  el.appendChild(back);
+
+  // Summary cards
+  var grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px';
+  Object.keys(SEGS).forEach(function(key){
+    var s = SEGS[key];
+    var n = grupos[key].length;
+    var card = document.createElement('div');
+    card.className = 'dc';
+    card.style.cssText = 'text-align:center;border-color:'+s.cor+'44;cursor:pointer';
+    card.innerHTML = '<div style="font-size:24px;margin-bottom:6px">'+s.emoji+'</div>'+
+      '<div style="font-family:Cormorant Garamond,serif;font-size:32px;color:'+s.cor+'">'+n+'</div>'+
+      '<div style="font-size:13px;color:var(--cream);margin-top:4px">'+s.label+'</div>'+
+      '<div style="font-size:10px;color:var(--muted);margin-top:2px">'+s.desc+'</div>';
+    var expBtn = document.createElement('div');
+    expBtn.style.cssText = 'font-size:11px;color:'+s.cor+';margin-top:10px;font-weight:600';
+    expBtn.textContent = '⬇ Exportar';
+    card.appendChild(expBtn);
+    card.addEventListener('click', (function(k){ return function(){ exportarGrupo(k, grupos, SEGS); }; })(key));
+    grid.appendChild(card);
+  });
+  el.appendChild(grid);
+
+  // Perto do desconto
+  if(perto.length){
+    var div = document.createElement('div');
+    div.className = 'dc';
+    div.style.borderColor = 'var(--gold)';
+    div.style.marginBottom = '16px';
+
+    var header = document.createElement('div');
+    header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:14px';
+    header.innerHTML = '<div>'+
+      '<div style="font-family:Cormorant Garamond,serif;font-size:18px;color:var(--gold)">🎁 Prestes a ganhar 15% de desconto</div>'+
+      '<div style="font-size:12px;color:var(--muted)">'+perto.length+' cliente'+(perto.length!==1?'s':'')+' na 4ª compra</div>'+
+      '</div>';
+    var expBtn = document.createElement('button');
+    expBtn.style.cssText = 'padding:8px 16px;background:var(--gold);border:none;border-radius:8px;color:#0C0906;cursor:pointer;font-size:12px;font-weight:700';
+    expBtn.textContent = '⬇ Exportar';
+    expBtn.addEventListener('click', function(){ exportarLista(perto, 'Perto_Desconto'); });
+    header.appendChild(expBtn);
+    div.appendChild(header);
+
+    perto.forEach(function(c){
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--surface3);cursor:pointer';
+      row.innerHTML = '<div><div style="font-size:14px;color:var(--cream)">'+(c.nome||'Sem nome')+'</div>'+
+        '<div style="font-size:11px;color:var(--muted)">'+c.telefone+'</div></div>'+
+        '<div style="font-size:12px;color:var(--gold)">Falta 1 compra!</div>';
+      row.addEventListener('click', (function(id){ return function(){ verDetalhe(id); }; })(String(c.id)));
+      div.appendChild(row);
+    });
+    el.appendChild(div);
+  }
+
+  // Segment detail sections
+  Object.keys(SEGS).forEach(function(key){
+    var s = SEGS[key];
+    var lista = grupos[key];
+    if(!lista.length) return;
+
+    var div = document.createElement('div');
+    div.className = 'dc';
+    div.style.marginBottom = '16px';
+
+    var header = document.createElement('div');
+    header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:14px';
+    header.innerHTML = '<div>'+
+      '<div style="font-family:Cormorant Garamond,serif;font-size:18px;color:'+s.cor+'">'+s.emoji+' '+s.label+'</div>'+
+      '<div style="font-size:12px;color:var(--muted)">'+s.desc+' · '+lista.length+' cliente'+(lista.length!==1?'s':'')+'</div>'+
+      '</div>';
+    var expBtn = document.createElement('button');
+    expBtn.style.cssText = 'padding:8px 16px;background:transparent;border:1px solid '+s.cor+';border-radius:8px;color:'+s.cor+';cursor:pointer;font-size:12px;font-weight:600';
+    expBtn.textContent = '⬇ Exportar';
+    expBtn.addEventListener('click', (function(k,g,S){ return function(){ exportarGrupo(k,g,S); }; })(key, grupos, SEGS));
+    header.appendChild(expBtn);
+    div.appendChild(header);
+
+    lista.forEach(function(c){
+      var cps2 = c.compras||[];
+      var tot = cps2.reduce(function(s,p){return s+Number(String(p.valor||0).replace(',','.'));},0);
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--surface3);cursor:pointer';
+      row.innerHTML = '<div>'+
+        '<div style="font-size:14px;color:var(--cream)">'+(c.nome||'Sem nome')+'</div>'+
+        '<div style="font-size:11px;color:var(--muted)">'+c.telefone+(c.email?' · '+c.email:'')+'</div>'+
+        '</div>'+
+        '<div style="text-align:right">'+
+        '<div style="font-size:13px;color:var(--cream)">'+cps2.length+' compra'+(cps2.length!==1?'s':'')+'</div>'+
+        '<div style="font-size:12px;color:'+s.cor+'">€'+fmtV(tot)+'</div>'+
+        '</div>';
+      row.addEventListener('click', (function(id){ return function(){ verDetalhe(id); }; })(String(c.id)));
+      div.appendChild(row);
+    });
+    el.appendChild(div);
+  });
+}
+
+function exportarGrupo(key, grupos, SEGS){
+  exportarLista(grupos[key], SEGS[key].label);
+}
+
+function exportarLista(lista, titulo){
+  var sep = ';';
+  var linhas = ['"Nome";"Telefone";"Email";"Pais";"Canal";"Num Compras";"Total EUR";"Ultima Compra";"Notas"'];
+  (lista||[]).forEach(function(c){
+    var cps2 = c.compras||[];
+    var tot = cps2.reduce(function(s,p){return s+Number(String(p.valor||0).replace(',','.'));},0);
+    var datas = cps2.map(function(p){return p.data||'';}).filter(Boolean).sort();
+    var ultima = datas.length>0?datas[datas.length-1]:'';
+    linhas.push([c.nome||'',c.telefone||'',c.email||'',c.pais||'',c.canal||'',
+      String(cps2.length),fmtV(tot),ultima,c.notas||'']
+      .map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';}).join(sep));
+  });
+  var NL = String.fromCharCode(13)+String.fromCharCode(10);
+  var blob = new Blob([linhas.join(NL)],{type:'text/csv;charset=utf-8;'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href=url; a.download=(titulo||'segmento').replace(/[^a-z0-9]/gi,'_')+'.csv';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  toast('Exportado!');
+}
+
 
 function verLTV(){
   currentView = 'ltv';
