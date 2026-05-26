@@ -123,7 +123,12 @@ function fmtV(v){return Number(String(v||0).replace(',','.')).toLocaleString('pt
 function fmtD(d){if(!d)return'';try{var p=d.toString().split('-');return p[2]+' '+MESES[parseInt(p[1])-1]+' '+p[0];}catch(e){return d;}}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);}
 function saveLocal(){try{localStorage.setItem('rp_crm5',JSON.stringify(clientes));}catch(e){}}
-function loadLocal(){try{var d=localStorage.getItem('rp_crm5');if(d)clientes=JSON.parse(d);}catch(e){}}
+function loadLocal(){
+  try{
+    var d=localStorage.getItem('rp_crm5')||localStorage.getItem('rp_crm4')||localStorage.getItem('rp_crm3')||localStorage.getItem('rp_crm2')||localStorage.getItem('rp_crm');
+    if(d)clientes=JSON.parse(d);
+  }catch(e){}
+}
 
 window.onload = function(){
   loadLocal();
