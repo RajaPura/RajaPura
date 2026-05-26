@@ -172,103 +172,92 @@ function verDetalhe(id){
 }
 
 function renderLista(){
-  var q = '';
-  var fc = '';
   var el = document.getElementById('mainContent');
+  el.innerHTML = '';
 
-  // Build toolbar
+  // Toolbar
   var toolbar = document.createElement('div');
   toolbar.className = 'toolbar';
-  toolbar.innerHTML =
-    '<input class="search" id="sInput" type="text" placeholder="🔍 Pesquisar..." value="'+q+'" oninput="renderLista()">' +
-    '<select class="filt" id="fCanalF" onchange="renderLista()"><option value="">Todos os canais</option><option value="loja">Loja</option><option value="online">Online</option><option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option><option value="etsy">Etsy</option></select>';
 
-  var btnNovo = document.createElement('button');
-  btnNovo.className = 'btn-g';
-  btnNovo.textContent = '+ Novo Cliente';
-  btnNovo.onclick = openNovo;
-  toolbar.appendChild(btnNovo);
+  var search = document.createElement('input');
+  search.className = 'search';
+  search.id = 'sInput';
+  search.type = 'text';
+  search.placeholder = '🔍 Pesquisar...';
+  search.oninput = renderLista;
+  toolbar.appendChild(search);
 
-  var btnExp = document.createElement('button');
-  btnExp.className = 'btn-o';
-  btnExp.textContent = '⬇ Exportar';
-  btnExp.onclick = exportar;
-  toolbar.appendChild(btnExp);
+  var filtro = document.createElement('select');
+  filtro.className = 'filt';
+  filtro.id = 'fCanalF';
+  filtro.onchange = renderLista;
+  filtro.innerHTML = '<option value="">Todos os canais</option><option value="loja">Loja</option><option value="online">Online</option><option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option><option value="etsy">Etsy</option>';
+  toolbar.appendChild(filtro);
 
-  var btnLTV = document.createElement('button');
-  btnLTV.className = 'btn-o';
-  btnLTV.textContent = '📊 LTV';
-  btnLTV.onclick = verLTV;
-  toolbar.appendChild(btnLTV);
+  var bNovo = document.createElement('button');
+  bNovo.className = 'btn-g';
+  bNovo.textContent = '+ Novo Cliente';
+  bNovo.onclick = openNovo;
+  toolbar.appendChild(bNovo);
 
-  var btnSeg = document.createElement('button');
-  btnSeg.className = 'btn-o';
-  btnSeg.textContent = '🎯 Segmentos';
-  btnSeg.onclick = verSegmentos;
-  toolbar.appendChild(btnSeg);
+  var bExp = document.createElement('button');
+  bExp.className = 'btn-o';
+  bExp.textContent = '⬇ Exportar';
+  bExp.onclick = exportar;
+  toolbar.appendChild(bExp);
 
+  var bLTV = document.createElement('button');
+  bLTV.className = 'btn-o';
+  bLTV.textContent = '📊 LTV';
+  bLTV.onclick = verLTV;
+  toolbar.appendChild(bLTV);
 
-  el.innerHTML = '';
+  var bSeg = document.createElement('button');
+  bSeg.className = 'btn-o';
+  bSeg.textContent = '🎯 Segmentos';
+  bSeg.onclick = verSegmentos;
+  toolbar.appendChild(bSeg);
+
   el.appendChild(toolbar);
 
-  // Filter after toolbar rendered
-  setTimeout(function(){
-    var sEl = document.getElementById('sInput');
-    var fEl = document.getElementById('fCanalF');
-    var qVal = sEl ? sEl.value.toLowerCase() : '';
-    var fcVal = fEl ? fEl.value : '';
+  // Client list
+  var q = (search.value||'').toLowerCase();
+  var fc = filtro.value||'';
 
-    var f = clientes.filter(function(c){
-      return (!qVal || (c.nome||'').toLowerCase().includes(qVal) || (c.telefone||'').includes(qVal)) &&
-             (!fcVal || (c.canal||'') === fcVal);
-    }).sort(function(a,b){return (a.nome||'').localeCompare(b.nome||'');});
+  var f = clientes.filter(function(c){
+    return (!q||(c.nome||'').toLowerCase().includes(q)||(c.telefone||'').includes(q)) && (!fc||(c.canal||'')===fc);
+  }).sort(function(a,b){return(a.nome||'').localeCompare(b.nome||'');});
 
-    var list = document.createElement('div');
-
-    if(!f.length){
-      list.innerHTML = '<div class="empty">Nenhum cliente encontrado</div>';
-    } else {
-      f.forEach(function(c){
-        var cps2 = c.compras || [];
-        var tot = cps2.reduce(function(s,p){return s+Number(String(p.valor||0).replace(',','.'));},0);
-        var nc = cps2.length;
-
-        var row = document.createElement('div');
-        row.className = 'cc';
-
-        var info = document.createElement('div');
-        info.style.flex = '1';
-        info.innerHTML =
-          '<div class="cn">'+(c.nome||'Sem nome')+'</div>'+
-          '<div class="cp">📞 '+(c.telefone||'—')+(c.pais?' · '+c.pais:'')+'</div>'+
-          '<div class="badges">'+
-          '<span class="badge bg">'+nc+' compra'+(nc!==1?'s':'')+'</span>'+
-          '<span class="badge bb">'+(c.canal||'loja')+'</span>'+
-          (tot>0?'<span class="badge bv">€'+fmtV(tot)+'</span>':'')+
-          '</div>';
-
-        var btn = document.createElement('button');
-        btn.textContent = '+ Compra';
-        btn.style.cssText = 'padding:8px 16px;background:var(--gold);border:none;border-radius:8px;color:#0C0906;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;margin-left:12px;flex-shrink:0;';
-
-        // Use closure properly
-        (function(cid){
-          btn.onclick = function(e){
-            e.stopPropagation();
-            openNovaCompra(cid);
-          };
-          row.onclick = function(){
-            verDetalhe(cid);
-          };
-        })(String(c.id));
-
-        row.appendChild(info);
-        row.appendChild(btn);
-        list.appendChild(row);
-      });
-    }
-    el.appendChild(list);
-  }, 0);
+  var list = document.createElement('div');
+  if(!f.length){
+    list.innerHTML = '<div class="empty">Nenhum cliente encontrado</div>';
+  } else {
+    f.forEach(function(c){
+      var cps2 = c.compras||[];
+      var tot = cps2.reduce(function(s,p){return s+Number(String(p.valor||0).replace(',','.'));},0);
+      var nc = cps2.length;
+      var row = document.createElement('div');
+      row.className = 'cc';
+      var info = document.createElement('div');
+      info.style.flex = '1';
+      info.innerHTML = '<div class="cn">'+(c.nome||'Sem nome')+'</div>'+
+        '<div class="cp">📞 '+(c.telefone||'—')+(c.pais?' · '+c.pais:'')+'</div>'+
+        '<div class="badges" style="margin-top:4px">'+
+        '<span class="badge bg">'+nc+' compra'+(nc!==1?'s':'')+'</span>'+
+        '<span class="badge bb">'+(c.canal||'loja')+'</span>'+
+        (tot>0?'<span class="badge bv">€'+fmtV(tot)+'</span>':'')+
+        '</div>';
+      var btn = document.createElement('button');
+      btn.textContent = '+ Compra';
+      btn.style.cssText = 'padding:8px 16px;background:var(--gold);border:none;border-radius:8px;color:#0C0906;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;margin-left:12px;flex-shrink:0;';
+      btn.addEventListener('click',(function(id){return function(e){e.stopPropagation();openNovaCompra(id);};})(String(c.id)));
+      row.appendChild(info);
+      row.appendChild(btn);
+      row.addEventListener('click',(function(id){return function(){verDetalhe(id);};})(String(c.id)));
+      list.appendChild(row);
+    });
+  }
+  el.appendChild(list);
 }
 
 function renderDetalhe(id){
