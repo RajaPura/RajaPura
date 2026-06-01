@@ -319,15 +319,16 @@ function goHome(){
 async function fetchRegistos(){
   setConnStatus('loading','A ligar ao Google Sheets...');
   try{
-    var res=await fetch(SCRIPT_URL+'?action=get');
+    var res=await fetch('https://sheetdb.io/api/v1/sdwyekoe0bhea');
     var data=await res.json();
-    var arr=data.registos||[];
-    registos=arr.map(function(r){
-      return{id:r.id,nome:r.nome,loja:r.loja,data:r.data,
-        valores:typeof r.valores==='string'?JSON.parse(r.valores||'{}'):(r.valores||{}),
-        total:parseNum(r.total)};
-    });
-    setConnStatus('connected','Ligado ao Google Sheets · '+registos.length+' registos');
+    if(Array.isArray(data)){
+      registos=data.map(function(r){
+        return{id:r.id,nome:r.nome,loja:r.loja,data:r.data,
+          valores:typeof r.valores==='string'?JSON.parse(r.valores||'{}'):(r.valores||{}),
+          total:parseNum(r.total)};
+      });
+      setConnStatus('connected','Ligado ao Google Sheets · '+registos.length+' registos');
+    }
     renderDashboard();renderEquipa();
   }catch(e){
     setConnStatus('disconnected','A funcionar offline');
@@ -336,9 +337,14 @@ async function fetchRegistos(){
 }
 
 async function postRegisto(registo){
-  var res=await fetch(SCRIPT_URL,{
+  var res=await fetch('https://sheetdb.io/api/v1/sdwyekoe0bhea',{
     method:'POST',
-    body:JSON.stringify({action:'add',registo:registo})
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({data:{
+      id:registo.id,nome:registo.nome,loja:registo.loja,
+      data:registo.data,valores:JSON.stringify(registo.valores||{}),
+      total:registo.total
+    }})
   });
   return await res.json();
 }
