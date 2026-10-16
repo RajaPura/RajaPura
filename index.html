@@ -257,8 +257,11 @@ var COLABORADORES = {
   'Claudia':{loja:'Silves',turno:'Loja',color:'#8DC47A',emoji:'👩',campos:['loja','instagram','whatsapp','lives']},
   'Patricia':{loja:'Silves',turno:'Loja',color:'#6E9E60',emoji:'👩',campos:['loja']},
   'Nadia':{loja:'Silves',turno:'Loja',color:'#A07850',emoji:'👩',campos:['loja']},
-  'Ines':{loja:'Silves',turno:'Loja',color:'#7A8E6E',emoji:'👩',campos:['loja']}
+  'Ines':{loja:'Silves',turno:'Loja',color:'#7A8E6E',emoji:'👩',campos:['loja']},
+  'Bela':{loja:'Silves',turno:'Loja',color:'#B58AA5',emoji:'👩',campos:['loja']},
+  'Leonor':{loja:'Silves',turno:'Noites FDS',color:'#7AAAD5',emoji:'👩',campos:['loja']}
 };
+var CAMPOS_SPLIT = {loja:true}; // canais com Dinheiro / Multibanco separados
 var CAMPO_LABELS = {loja:'Vendas Loja',shopify:'Shopify',instagram:'Instagram/Facebook',whatsapp:'WhatsApp',etsy:'Etsy',lives:'Lives'};
 
 var TURNOS_LIMP = {
@@ -470,6 +473,10 @@ function renderEquipa(){
       breakdown+='</div>';
     }
 
+    var dM=recs.reduce(function(s,r){return s+parseNum(r.valores&&r.valores.loja_dinheiro);},0);
+    var mM=recs.reduce(function(s,r){return s+parseNum(r.valores&&r.valores.loja_multibanco);},0);
+    var pagamentos='<div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:12px;padding:8px 12px;background:var(--surface2);border-radius:9px;font-size:11px;color:var(--muted)"><span>💶 Dinheiro <b style="color:var(--cream)">'+fmt(dM)+'</b></span><span>💳 MB <b style="color:var(--cream)">'+fmt(mM)+'</b></span></div>';
+
     var card=document.createElement('div');
     card.className='collab-card';
     card.style.borderColor=col.color+'33';
@@ -477,7 +484,7 @@ function renderEquipa(){
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'+
     '<div style="background:var(--surface2);border-radius:10px;padding:12px 14px"><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Hoje</div><div style="font-family:Cormorant Garamond,serif;font-size:22px;color:'+col.color+'">'+fmt(hj)+'</div></div>'+
     '<div style="background:var(--surface2);border-radius:10px;padding:12px 14px"><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Total Mês</div><div style="font-family:Cormorant Garamond,serif;font-size:22px;color:var(--cream)">'+fmt(tM)+'</div></div>'+
-    '</div>'+breakdown;
+    '</div>'+pagamentos+breakdown;
 
     var btn=document.createElement('button');
     btn.textContent='+ Registar Vendas';
@@ -529,13 +536,31 @@ function openModal(nome){
   document.getElementById('totalPreview').style.borderColor=col.color+'44';
   document.getElementById('totalPreviewVal').style.color=col.color;
   document.getElementById('modalData').value=todayStr();
-  document.getElementById('modalCampos').innerHTML=col.campos.map(function(c){return '<div class="form-group"><label class="form-label">'+CAMPO_LABELS[c]+'</label><div style="position:relative"><span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:'+col.color+';font-size:14px">€</span><input class="form-input" type="number" min="0" step="0.01" id="campo_'+c+'" placeholder="0,00" oninput="updateTotal()" style="padding-left:28px"></div></div>';}).join('');
+  function inp(id,ph){return '<div style="position:relative;flex:1"><span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:'+col.color+';font-size:14px">€</span><input class="form-input" type="number" min="0" step="0.01" inputmode="decimal" id="'+id+'" placeholder="'+ph+'" oninput="updateTotal()" style="padding-left:28px"></div>';}
+  document.getElementById('modalCampos').innerHTML=col.campos.map(function(c){
+    if(CAMPOS_SPLIT[c]){
+      return '<div class="form-group"><label class="form-label">'+CAMPO_LABELS[c]+'</label><div style="display:flex;gap:10px"><div style="flex:1"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">💶 Dinheiro</div>'+inp('campo_'+c+'_dinheiro','0,00')+'</div><div style="flex:1"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">💳 Multibanco</div>'+inp('campo_'+c+'_multibanco','0,00')+'</div></div></div>';
+    }
+    return '<div class="form-group"><label class="form-label">'+CAMPO_LABELS[c]+'</label>'+inp('campo_'+c,'0,00')+'</div>';
+  }).join('');
   updateTotal();
   document.getElementById('registoModal').style.display='flex';
 }
+function numEl(id){var el=document.getElementById(id);return el?Number(String(el.value||0).replace(',','.'))||0:0;}
+function lerCampos(col){
+  var v={};
+  col.campos.forEach(function(c){
+    if(CAMPOS_SPLIT[c]){
+      var d=numEl('campo_'+c+'_dinheiro'),m=numEl('campo_'+c+'_multibanco');
+      v[c+'_dinheiro']=d;v[c+'_multibanco']=m;v[c]=Math.round((d+m)*100)/100;
+    }else{v[c]=numEl('campo_'+c);}
+  });
+  return v;
+}
 function updateTotal(){
   if(!currentCollab)return;
-  var t=COLABORADORES[currentCollab].campos.reduce(function(s,c){var el=document.getElementById('campo_'+c);return s+Number(el?el.value:0);},0);
+  var col=COLABORADORES[currentCollab],v=lerCampos(col);
+  var t=col.campos.reduce(function(s,c){return s+Number(v[c]||0);},0);
   document.getElementById('totalPreviewVal').textContent=fmt(t);
 }
 function closeModal(){document.getElementById('registoModal').style.display='none';currentCollab=null;}
@@ -543,7 +568,7 @@ function closeModal(){document.getElementById('registoModal').style.display='non
 async function guardarRegisto(){
   if(!currentCollab)return;
   var col=COLABORADORES[currentCollab],valores={};
-  col.campos.forEach(function(c){var el=document.getElementById('campo_'+c);valores[c]=Number(el?el.value:0);});
+  valores=lerCampos(col);
   var total=col.campos.reduce(function(s,c){return s+Number(valores[c]||0);},0);
   var registo={id:String(Date.now()),nome:currentCollab,loja:col.loja,data:document.getElementById('modalData').value,valores:valores,total:total};
   var btn=document.getElementById('btnSave');
