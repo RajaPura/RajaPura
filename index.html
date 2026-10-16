@@ -181,6 +181,10 @@ tfoot td{border-top:1px solid var(--gold-dim);border-bottom:none;font-weight:600
       <div class="section-title">Vendas de Hoje por Colaborador</div>
       <div id="todayCollabs"></div>
     </div>
+    <div class="today-card" style="margin-top:16px">
+      <div class="section-title">📷 Fechos de Caixa de Hoje</div>
+      <div id="todayFechos" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px"></div>
+    </div>
   </div>
 
   <div id="tab-equipa" style="display:none">
@@ -244,10 +248,12 @@ tfoot td{border-top:1px solid var(--gold-dim);border-bottom:none;font-weight:600
   </div>
 </div>
 
+<input type="file" id="fechoInput" accept="image/*" style="display:none">
 <div class="toast" id="toast">✓ Guardado!</div>
 
 <script>
 var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwpHwVMCBzVZtldfCOAg1skoMqtr3cJZqefx6bGAK6voBFGBGYguX-8xjwZ919SA7T-/exec';
+var FECHO_URL = ''; // Apps Script dos Fechos de Caixa
 var MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 var COLABORADORES = {
@@ -272,6 +278,7 @@ var TURNOS_LIMP = {
   patricia:{label:'Patrícia',emoji:'👩',color:'#6E9E60',tarefas:['Limpar o pó','Limpar espelhos','Fazer reposição','Mudar manequins','Organizar expositores','Colocar cabides sempre iguais','Colocar os artigos juntos por modelos e suas cores','Deixar o balcão limpo e organizado','Levar o lixo','Limpar vidros da montra e refazer 1x por semana','Aspirar e lavar antes de sair','Limpar o WC']}
 };
 
+var fechos=[];
 var registos=[], limpezas=[], meta=0, currentCollab=null, limpChecked={};
 
 function todayStr(){return new Date().toISOString().split('T')[0];}
@@ -290,6 +297,7 @@ window.onload=function(){
   updateMetaBtn();
   setConnStatus('loading','A ligar ao Google Sheets...');
   fetchRegistos();
+  fetchFechos();
 };
 
 function goTo(area){
@@ -405,6 +413,63 @@ function syncLimpeza(reg){
 
 function saveLimpezas(){try{localStorage.setItem('rp_limpezas3',JSON.stringify(limpezas));}catch(e){}}
 
+// FECHOS DE CAIXA
+function fechoDe(nome,data){return fechos.find(function(f){return f.nome===nome&&f.data===data;});}
+function fetchFechos(){
+  if(!FECHO_URL){renderFechos();return;}
+  var cb='cb_fecho_'+Date.now();
+  var sc=document.createElement('script');
+  sc.src=FECHO_URL+'?mes='+mesAtual()+'&callback='+cb;
+  window[cb]=function(d){delete window[cb];try{document.body.removeChild(sc);}catch(e){}fechos=d.fechos||[];renderFechos();renderEquipa();};
+  sc.onerror=function(){try{document.body.removeChild(sc);}catch(e){}};
+  document.body.appendChild(sc);
+}
+function renderFechos(){
+  var el=document.getElementById('todayFechos');if(!el)return;
+  if(!FECHO_URL){el.innerHTML='<div style="font-size:12px;color:var(--muted)">Ainda por configurar.</div>';return;}
+  var hoje=todayStr();
+  el.innerHTML=Object.keys(COLABORADORES).map(function(nome){
+    var col=COLABORADORES[nome],f=fechoDe(nome,hoje);
+    var inner='<span style="font-size:13px;color:var(--cream)">'+nome+'</span><span style="font-size:12px;color:'+(f?'var(--silves-light)':'var(--muted)')+'">'+(f?'✓ Ver foto':'— por enviar')+'</span>';
+    var st='display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:9px;background:var(--surface2);border:1px solid '+(f?'rgba(110,158,96,.35)':'var(--surface3)')+';text-decoration:none';
+    return f?'<a href="'+f.link+'" target="_blank" rel="noopener" style="'+st+'">'+inner+'</a>':'<div style="'+st+'">'+inner+'</div>';
+  }).join('');
+}
+function comprimirFoto(file){
+  return new Promise(function(ok,ko){
+    var img=new Image(),url=URL.createObjectURL(file);
+    img.onload=function(){
+      var max=1600,w=img.width,h=img.height,r=Math.min(1,max/Math.max(w,h));
+      var c=document.createElement('canvas');c.width=Math.round(w*r);c.height=Math.round(h*r);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);
+      ok(c.toDataURL('image/jpeg',0.75).split(',')[1]);
+    };
+    img.onerror=function(){ko(new Error('Imagem inválida'));};
+    img.src=url;
+  });
+}
+function enviarFecho(nome,btn){
+  if(!FECHO_URL){alert('O envio de fotos ainda não está configurado.');return;}
+  var input=document.getElementById('fechoInput');
+  input.value='';
+  input.onchange=async function(){
+    var file=input.files&&input.files[0];if(!file)return;
+    var original=btn.textContent;btn.textContent='A enviar...';btn.disabled=true;
+    try{
+      var b64=await comprimirFoto(file);
+      var col=COLABORADORES[nome];
+      try{
+        await fetch(FECHO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({nome:nome,loja:col.loja,data:todayStr(),imagem:b64})});
+      }catch(e){}
+      showToast('✓ Fecho de caixa enviado!');
+      setTimeout(fetchFechos,1500);
+    }catch(e){alert('Não foi possível enviar a foto. Tenta outra vez.');}
+    btn.textContent=original;btn.disabled=false;
+  };
+  input.click();
+}
+
 // TABS
 function switchTab(tab,btn){
   ['dashboard','equipa','tabela','limpezas'].forEach(function(t){document.getElementById('tab-'+t).style.display=t===tab?'':'none';});
@@ -491,6 +556,12 @@ function renderEquipa(){
     btn.style.cssText='width:100%;padding:9px;border-radius:9px;border:1px solid '+col.color+'55;background:'+col.color+'18;color:'+col.color+';cursor:pointer;font-size:13px;font-weight:600;font-family:DM Sans,sans-serif;';
     btn.addEventListener('click',(function(n){return function(){openModal(n);};})(nome));
     card.appendChild(btn);
+    var fh=fechoDe(nome,todayStr());
+    var fb=document.createElement('button');
+    fb.textContent=fh?'✓ Fecho enviado · Reenviar':'📷 Fecho de Caixa';
+    fb.style.cssText='width:100%;margin-top:8px;padding:9px;border-radius:9px;border:1px solid '+(fh?'rgba(110,158,96,.45)':'var(--surface3)')+';background:'+(fh?'rgba(110,158,96,.1)':'transparent')+';color:'+(fh?'var(--silves-light)':'var(--cream)')+';cursor:pointer;font-size:13px;font-family:DM Sans,sans-serif;';
+    fb.addEventListener('click',(function(n,b){return function(){enviarFecho(n,b);};})(nome,fb));
+    card.appendChild(fb);
     grid.appendChild(card);
   });
 }
