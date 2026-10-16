@@ -459,9 +459,13 @@ function enviarFecho(nome,btn){
     try{
       var b64=await comprimirFoto(file);
       var col=COLABORADORES[nome];
+      var res,txt='';
       try{
-        await fetch(FECHO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({nome:nome,loja:col.loja,data:todayStr(),imagem:b64})});
-      }catch(e){}
+        res=await fetch(FECHO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({nome:nome,loja:col.loja,data:todayStr(),imagem:b64})});
+        txt=await res.text();
+      }catch(e){txt='Erro de ligação: '+e.message;}
+      var r=null;try{r=JSON.parse(txt);}catch(e){}
+      if(!r||!r.ok){alert('O fecho NÃO foi guardado.\n\nDetalhe: '+((r&&r.erro)||txt.substring(0,200)||'sem resposta'));btn.textContent=original;btn.disabled=false;return;}
       showToast('✓ Fecho de caixa enviado!');
       setTimeout(fetchFechos,1500);
     }catch(e){alert('Não foi possível enviar a foto. Tenta outra vez.');}
