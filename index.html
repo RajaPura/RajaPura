@@ -652,7 +652,7 @@ function renderLojas(rm,mes){
       var tal=L.regs.reduce(function(s,r){return s+parseNum(r.valores&&r.valores.taloes);},0);
       var con=L.regs.reduce(function(s,r){return s+parseNum(r.valores&&r.valores.contactos);},0);
       var vendTal=L.regs.filter(function(r){return parseNum(r.valores&&r.valores.taloes)>0;}).reduce(function(s,r){return s+L.val(r);},0);
-      kp='<div class="loja-kpis"><span>🧾 '+(tal||'—')+' talões</span><span>💶 '+(tal?fmt(vendTal/tal)+' por talão':'ticket médio —')+'</span><span>💌 '+con+' contactos'+(tal?' · '+Math.round(con/tal*100)+'% dos talões':'')+'</span></div>';
+      kp='<div class="loja-kpis"><span>💌 '+con+' contactos este mês</span></div>';
     }
     return '<div class="loja-row"><div class="loja-head"><div class="loja-nome"><span class="sem '+sem+'" title="'+sem+'"></span>'+L.k+'</div>'+
       '<div class="loja-pct" style="color:'+L.cor+'">'+p+'%</div></div>'+
@@ -678,7 +678,7 @@ function openModal(nome){
       return '<div class="form-group"><label class="form-label">'+CAMPO_LABELS[c]+'</label><div style="display:flex;gap:10px"><div style="flex:1"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">💶 Dinheiro</div>'+inp('campo_'+c+'_dinheiro','0,00')+'</div><div style="flex:1"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">💳 Multibanco</div>'+inp('campo_'+c+'_multibanco','0,00')+'</div></div></div>';
     }
     return '<div class="form-group"><label class="form-label">'+CAMPO_LABELS[c]+'</label>'+inp('campo_'+c,'0,00')+'</div>';
-  }).join('')+(col.campos.indexOf('loja')>=0?'<div class="form-group"><label class="form-label">Loja: talões e contactos de hoje</label><div style="display:flex;gap:10px"><div style="flex:1"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">🧾 Nº de talões</div><input class="form-input" type="number" min="0" step="1" inputmode="numeric" id="campo_taloes" placeholder="0"></div><div style="flex:1"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">💌 Contactos para a Tribo</div><input class="form-input" type="number" min="0" step="1" inputmode="numeric" id="campo_contactos" placeholder="0"></div></div></div>':'');
+  }).join('')+(col.campos.indexOf('loja')>=0?'<div class="form-group"><label class="form-label">💌 Contactos captados hoje para a Tribo</label><input class="form-input" type="number" min="0" step="1" inputmode="numeric" id="campo_contactos" placeholder="0"></div>':'');
   updateTotal();
   document.getElementById('registoModal').style.display='flex';
 }
@@ -706,7 +706,7 @@ async function guardarRegisto(){
   var col=COLABORADORES[currentCollab],valores={};
   valores=lerCampos(col);
   var total=col.campos.reduce(function(s,c){return s+Number(valores[c]||0);},0);
-  if(document.getElementById('campo_taloes')){valores.taloes=Math.round(numEl('campo_taloes'));valores.contactos=Math.round(numEl('campo_contactos'));}
+  if(document.getElementById('campo_contactos')){valores.contactos=Math.round(numEl('campo_contactos'));}
   var registo={id:String(Date.now()),nome:currentCollab,loja:col.loja,data:document.getElementById('modalData').value,valores:valores,total:total};
   var btn=document.getElementById('btnSave');
   btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;
