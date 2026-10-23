@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raja Pura — OKRs e Métricas</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0C0906;--surface:#171210;--surface2:#211A13;--surface3:#2C2218;--gold:#C8913A;--gold-light:#E5B05A;--gold-dim:#7A5A1E;--cream:#F0E6D3;--muted:#7A6A55;--muted2:#4A3D2E;--lagos:#C8913A;--silves:#6E9E60;--silves-light:#8DC47A;--online:#7AAAD5;--vera:#B58AA5;--ok:#6BC28F;--warn:#E5B05A;--bad:#E07050;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;font-size:14px;}
+button,input,select,textarea{font-family:'DM Sans',sans-serif;}
+.header{background:linear-gradient(180deg,var(--surface) 0%,transparent 100%);border-bottom:1px solid var(--surface3);padding:0 max(16px,env(safe-area-inset-left));}
+.header-inner{max-width:1000px;margin:0 auto;padding:24px 0 0;}
+.header-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
+.brand-tag{font-size:10px;letter-spacing:4px;color:var(--gold-dim);text-transform:uppercase;margin-bottom:6px;}
+.brand-title{font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--cream);line-height:1.1;}
+.brand-sub{font-size:12px;color:var(--muted);margin-top:4px;}
+.top-ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.sel,.btn{padding:9px 14px;background:transparent;border:1px solid var(--gold-dim);border-radius:8px;color:var(--gold);cursor:pointer;font-size:12px;}
+.sel{background:var(--surface2);color:var(--cream);border-color:var(--surface3);}
+.btn.on{background:var(--gold);color:var(--bg);border-color:var(--gold);font-weight:600;}
+.tabs{display:flex;overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{padding:12px 16px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;font-size:13px;white-space:nowrap;transition:all .2s;}
+.tab.active{border-bottom-color:var(--gold);color:var(--gold);font-weight:500;}
+.main{max-width:1000px;margin:0 auto;padding:24px max(16px,env(safe-area-inset-left)) 80px;}
+.sync{display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:8px;font-size:12px;margin-bottom:18px;border:1px solid;}
+.sync.ok{background:rgba(90,158,90,.1);border-color:rgba(90,158,90,.3);color:var(--silves-light);}
+.sync.err{background:rgba(196,74,42,.1);border-color:rgba(196,74,42,.3);color:#E07050;}
+.sync.load{background:rgba(200,145,58,.1);border-color:rgba(200,145,58,.3);color:var(--gold);}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none;}
+.sync.load .dot{animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.card{background:var(--surface);border-radius:14px;padding:20px 22px;border:1px solid var(--surface3);margin-bottom:18px;min-width:0;}
+.card.gold{border-color:var(--gold-dim);}
+.sec{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--cream);margin-bottom:4px;}
+.note{font-size:12px;color:var(--muted);margin-bottom:14px;}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));margin-bottom:18px;}
+.tile{background:var(--surface);border-radius:14px;padding:18px;border:1px solid var(--surface3);border-top:3px solid var(--c,var(--gold));}
+.tile-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;}
+.tile-name{font-family:'Cormorant Garamond',serif;font-size:19px;display:flex;align-items:center;gap:8px;}
+.sem{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none;background:var(--muted2);}
+.sem.verde{background:var(--ok);box-shadow:0 0 8px rgba(107,194,143,.6);}
+.sem.amarelo{background:var(--warn);box-shadow:0 0 8px rgba(229,176,90,.6);}
+.sem.vermelho{background:var(--bad);box-shadow:0 0 8px rgba(224,112,80,.6);}
+.chip{font-size:11px;border:1px solid var(--surface3);border-radius:99px;padding:3px 10px;color:var(--cream);white-space:nowrap;}
+.chip.verde{color:var(--ok);border-color:rgba(107,194,143,.4);}
+.chip.amarelo{color:var(--warn);border-color:rgba(229,176,90,.4);}
+.chip.vermelho{color:var(--bad);border-color:rgba(224,112,80,.4);}
+.big{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1;}
+.sub{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:3px;}
+.track{position:relative;background:var(--surface3);border-radius:99px;height:8px;margin:10px 0 6px;}
+.fill{position:absolute;left:0;top:0;bottom:0;border-radius:99px;transition:width .8s;}
+.pace{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--cream);opacity:.75;border-radius:1px;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.obj{font-family:'Cormorant Garamond',serif;font-size:22px;line-height:1.35;color:var(--cream);}
+.who{font-size:12px;color:var(--muted);margin-top:6px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+.tw{overflow-x:auto;margin:0 -4px;}
+th{padding:10px 10px;color:var(--muted);font-weight:500;font-size:10px;text-transform:uppercase;letter-spacing:1px;text-align:left;border-bottom:1px solid var(--surface3);white-space:nowrap;}
+td{padding:10px 10px;border-bottom:1px solid rgba(44,34,24,.6);color:var(--cream);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
+.auto{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--gold-dim);border:1px solid var(--gold-dim);border-radius:4px;padding:1px 4px;margin-left:6px;vertical-align:middle;}
+.task-group{margin-bottom:16px;}
+.task-group h4{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:8px;display:flex;justify-content:space-between;gap:8px;}
+.task{display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px;padding:9px 10px;border-radius:10px;background:var(--surface2);margin-bottom:6px;}
+.task input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold);margin-top:1px;flex:none;cursor:pointer;}
+.task .t{flex:1;min-width:0;line-height:1.4;}
+.task.done .t{color:var(--muted);text-decoration:line-through;}
+.quem{font-size:11px;color:var(--gold);white-space:nowrap;}
+.edit-in{width:100%;padding:7px 10px;background:var(--surface2);border:1px solid var(--surface3);border-radius:8px;color:var(--cream);font-size:13px;outline:none;}
+.edit-in:focus{border-color:var(--gold-dim);}
+.edit-in.num{text-align:right;max-width:110px;}
+textarea.edit-in{min-height:64px;resize:vertical;font-family:'DM Sans',sans-serif;}
+.del{background:transparent;border:1px solid var(--surface3);color:var(--muted);border-radius:8px;width:30px;height:30px;cursor:pointer;flex:none;}
+.del:hover{color:var(--bad);border-color:var(--bad);}
+.add{margin-top:6px;padding:8px 12px;background:transparent;border:1px dashed var(--gold-dim);border-radius:8px;color:var(--gold);cursor:pointer;font-size:12px;}
+.row{display:flex;gap:8px;align-items:center;}
+.prog{font-size:11px;color:var(--muted);letter-spacing:0;text-transform:none;}
+.dec{padding:10px 12px;background:var(--surface2);border-radius:10px;margin-bottom:6px;line-height:1.45;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(140px);background:var(--gold);color:var(--bg);padding:10px 18px;border-radius:99px;font-size:13px;font-weight:600;transition:transform .3s;z-index:50;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.hide{display:none!important;}
+.metas-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:10px;}
+.mbox{background:var(--surface2);border-radius:10px;padding:12px;}
+.mbox .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
+.mbox .v{font-family:'Cormorant Garamond',serif;font-size:22px;}
+.feito{color:var(--ok);}
+.kedit{display:grid;gap:8px;}
+.kgrid{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));}
+.kl{display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+@media (prefers-reduced-motion:reduce){.fill{transition:none}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div>
+        <div class="brand-tag">Raja Pura</div>
+        <div class="brand-title">OKRs e Métricas</div>
+        <div class="brand-sub" id="periodo">Novembro 2026 – janeiro 2027</div>
+      </div>
+      <div class="top-ctrl">
+        <select class="sel" id="mes" aria-label="Mês"></select>
+        <button class="btn" id="editar">✏️ Editar</button>
+      </div>
+    </div>
+    <div class="tabs" id="tabs"></div>
+  </div>
+</div>
+<div class="main">
+  <div class="sync load" id="sync"><span class="dot"></span><span id="syncTxt">A carregar…</span></div>
+  <div id="view"></div>
+</div>
+<div class="toast" id="toast">✓ Guardado</div>
+
+<script>
+var API = 'https://moloni-rajapura.skwezer-v.workers.dev/painel/Y33O9D9esxMpe2at-j-nNsfW';
+var SHEETDB = 'https://sheetdb.io/api/v1/sdwyekoe0bhea';
+var LAGOS_NOMES = ['eduardo','zelia','zélia','vera'];
+var CANAIS = ['shopify','etsy','lives','instagram','whatsapp'];
+var MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+
+// ---------- dados por defeito (do documento de OKRs) ----------
+function uid(){return Math.random().toString(36).slice(2,9);}
+function T(texto,quem,freq){return {id:uid(),texto:texto,quem:quem||'',freq:freq||'semana'};}
+function K(nome,atual,meta,quando,auto){return {id:uid(),nome:nome,atual:atual||'',meta:meta||'',quando:quando||'Semanal',auto:auto||''};}
+var DEFAULT = {
+  versao:0,
+  titulo:'OKRs e Métricas',
+  periodo:'Novembro 2026 – janeiro 2027',
+  foco:'Vender o inverno com lucro e começar a saber quem são as nossas clientes.',
+  metas:{
+    '2026-11':{Lagos:7500,Silves:2600,Online:2500},
+    '2026-12':{Lagos:9500,Silves:2600,Online:3500},
+    '2027-01':{Lagos:6600,Silves:1800,Online:2500}
+  },
+  anoAnterior:{Lagos:21448,Silves:3814,Online:null},
+  frentes:[
+    {id:'Lagos',nome:'Lagos',cor:'var(--lagos)',equipa:'Zélia (responsável) e Eduardo',
+     objetivo:'Fazer de Lagos uma loja que conhece as suas clientes, crescendo 10% no inverno.',
+     kpis:[K('Vendas do mês vs meta','','100%','Todos os dias','vendas'),K('Número de talões','','registar 100% dos dias','Semanal','taloes'),K('Ticket médio (vendas ÷ talões)','','+10% até janeiro','Semanal','ticket'),K('Talões com cliente identificado','0%','30%','Semanal'),K('Contactos novos na Tribo','','60 por mês','Semanal','contactos'),K('Fechos de caixa fotografados','quase todos','100%, por pessoa','Diário')],
+     tarefas:[T('Pedir a cada cliente o email ou telemóvel para a Tribo, com a oferta de 10% na próxima compra (QR no balcão)','Turno','dia'),T('Registar no painel da equipa as vendas do dia e os contactos captados','Turno','dia'),T('Fotografar o fecho de caixa no fim do turno','Turno','dia'),T('Repor na loja o que se vendeu e anotar o que falta','Turno','dia'),
+       T('Segunda até às 12h: ver como vai a semana e enviar ao armazém a lista de reposição','Zélia'),T('Mudar a montra e a mesa da entrada com as peças mais paradas','Zélia'),T('Gravar 1 vídeo curto de uma peça ou de um look para o Instagram','Zélia'),T('Confirmar que os registos da semana estão certos','Zélia'),
+       T('Sábado: rever quantos contactos se fizeram e o que funcionou','Eduardo'),T('Arrumar e contar uma família de peças e comparar com o Moloni','Eduardo')]},
+    {id:'Silves',nome:'Silves',cor:'var(--silves-light)',equipa:'Cláudia (responsável), Patrícia, Nádia, Bela e Leonor',
+     objetivo:'Silves paga-se a si própria todos os meses do inverno, com pelo menos 2 600 € em novembro e dezembro.',
+     kpis:[K('Vendas do mês vs meta','','100%','Todos os dias','vendas'),K('Número de talões','','registar 100% dos dias','Semanal','taloes'),K('Ticket médio','','+10% até janeiro','Semanal','ticket'),K('Talões com cliente identificado','0%','30%','Semanal'),K('Contactos novos na Tribo','','25 por mês','Semanal','contactos'),K('Clientes da zona que voltam à loja','não medido','10 por mês','Mensal')],
+     tarefas:[T('Pedir a cada cliente o email ou telemóvel para a Tribo, com a oferta de 10% na próxima compra','Turno','dia'),T('Registar no painel as vendas do turno e os contactos (cada uma com o próprio nome)','Turno','dia'),T('Fotografar o fecho de caixa no fim do turno','Turno','dia'),T('Responder no próprio dia às mensagens de clientes que chegarem à loja','Turno','dia'),
+       T('Arrumar e contar uma família de peças e comparar com o Moloni','Patrícia'),T('Gravar 1 vídeo curto na loja para o Instagram','Nádia'),T('Ligar ou mandar mensagem a 5 clientes de Silves a convidar para ver novidades','Bela'),T('Fim de semana: preparar a montra para a semana seguinte','Leonor'),
+       T('Segunda: rever a semana com a equipa e mandar a reposição','Cláudia'),T('Organizar 1 ação na loja (ex.: tarde de Natal com as clientes da zona)','Cláudia','mes'),T('Confirmar que o horário de inverno está afixado e cumprido','Cláudia','mes')]},
+    {id:'Online',nome:'Online e armazém',cor:'var(--online)',equipa:'Cláudia',
+     objetivo:'O online volta a ser o segundo motor da Raja Pura, com 2 500 a 3 500 € por mês, e nenhuma encomenda espera.',
+     kpis:[K('Vendas online do mês vs meta','712 € em setembro','2 500 – 3 500 €','Semanal','vendas'),K('Lives por mês','0 em setembro','8 (2 por semana)','Semanal','lives'),K('Vendas por Live','','200 € por Live','Por Live','vendas_live'),K('Encomendas enviadas em menos de 48h','não medido','100%','Semanal'),K('Tempo de resposta a DMs e mensagens Etsy','variável','menos de 2 horas','Semanal'),K('Vendas do Instagram registadas no CRM','parcial','100%','Semanal'),K('Referências do Moloni com custo','46%','100% até janeiro','Mensal')],
+     tarefas:[T('Embalar e enviar as encomendas do dia (fatura e guia feitas pelo agente)','Cláudia','dia'),T('Responder às DMs e mensagens da Etsy (respostas preparadas pelo agente)','Cláudia','dia'),T('Registar no CRM cada venda feita por Instagram ou WhatsApp','Cláudia','dia'),
+       T('2 Lives (ex.: terça e sexta), cada uma com 8 a 10 peças e meta de 200 €','Cláudia'),T('3 mensagens na comunidade Tribo do WhatsApp (novidade, bastidores, peça da semana)','Cláudia'),T('Segunda: preparar a reposição pedida por Lagos e Silves','Cláudia'),T('Pôr o custo em 30 referências do Moloni','Cláudia'),
+       T('Fotografar e publicar 10 peças novas ou paradas na Shopify e na Etsy','Cláudia','mes'),T('Contar o armazém de uma família de peças e comparar com o Moloni','Cláudia','mes')]},
+    {id:'Vera',nome:'Vera — direção',cor:'var(--vera)',equipa:'Vera',
+     objetivo:'Inverno com lucro e equipa com donos.',
+     kpis:[K('Resultado operacional nov–jan','jan–mar 2026: −1 700 €','≥ 0 €','Mensal'),K('Campanhas de email por mês','0 em jul–set','2','Mensal'),K('Dias com anúncios ligados (Etsy e Meta)','~0 em setembro','todos','Semanal'),K('Compras de nov–dez ÷ compras do ano','31%','≤ 20%','Mensal')],
+     tarefas:[T('Aprovar as 2 campanhas de email do mês','Vera','mes'),T('Aprovar a frase do dia','Vera','dia'),T('Revisão de 30 minutos a este painel (segunda de manhã)','Vera'),T('Encontro de contas nos dias 1 e 2 do mês','Vera','mes')]}
+  ],
+  decisoes:[
+    {id:uid(),texto:'Prémio de equipa: valor por loja quando a meta do mês é cumprida (proposta: um valor fixo dividido pela equipa da loja).'},
+    {id:uid(),texto:'Horário de inverno de Silves: dias e horas a partir de novembro.'},
+    {id:uid(),texto:'Metas: os valores são uma proposta com os números de 2025 e 2026; ajustam-se antes de 1 de novembro.'}
+  ],
+  feitos:{}
+};
+
+// ---------- estado ----------
+var S = null, editing = false, tab = 'Resumo', registos = [], moloni = {}, saveTimer = null;
+function hojeLx(){return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Lisbon'}).format(new Date());}
+var HOJE = hojeLx();
+var mes = HOJE.slice(0,7);
+function semanaISO(d){var dt=new Date(d+'T12:00:00Z');var day=(dt.getUTCDay()+6)%7;dt.setUTCDate(dt.getUTCDate()-day+3);var y=dt.getUTCFullYear();var jan4=new Date(Date.UTC(y,0,4));var w=1+Math.round(((dt-jan4)/86400000-3+((jan4.getUTCDay()+6)%7))/7);return y+'-S'+String(w).padStart(2,'0');}
+function periodo(freq){return freq==='dia'?HOJE:freq==='mes'?HOJE.slice(0,7):semanaISO(HOJE);}
+var eurF=new Intl.NumberFormat('pt-PT',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+var eur2=new Intl.NumberFormat('pt-PT',{style:'currency',currency:'EUR',maximumFractionDigits:2});
+function eur(v){return v==null||isNaN(v)?'—':(Math.abs(v)>=1000?eurF:eur2).format(v);}
+function nomeMes(m){var p=m.split('-');return MESES[+p[1]-1]+' '+p[0];}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+function pn(x){if(x==null||x==='')return 0;var n=Number(String(x).replace(',','.'));return isFinite(n)?n:0;}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function toast(t){var e=document.getElementById('toast');e.textContent=t||'✓ Guardado';e.classList.add('show');setTimeout(function(){e.classList.remove('show');},1600);}
+function sync(cls,txt){var e=document.getElementById('sync');e.className='sync '+cls;document.getElementById('syncTxt').textContent=txt;}
+
+// ---------- guardar e carregar ----------
+function guardarLocal(){try{localStorage.setItem('rp_okr',JSON.stringify(S));}catch(e){}}
+function guardar(){
+  guardarLocal();
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async function(){
+    try{
+      var r=await fetch(API+'/okr',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(S)});
+      var j=await r.json();
+      if(r.status===409){S=j.atual;guardarLocal();render();toast('Alguém alterou entretanto: carreguei a versão mais recente');return;}
+      if(!r.ok)throw new Error(j.erro||r.status);
+      S.versao=j.versao;S.atualizadoEm=j.atualizadoEm;guardarLocal();
+      sync('ok','Guardado na nuvem · '+new Date(j.atualizadoEm).toLocaleString('pt-PT'));toast();
+    }catch(e){sync('err','Guardado só neste aparelho ('+e.message+')');}
+  },700);
+}
+async function carregar(){
+  var local=null;try{local=JSON.parse(localStorage.getItem('rp_okr')||'null');}catch(e){}
+  try{
+    var r=await fetch(API+'/okr');var j=await r.json();
+    if(!r.ok)throw new Error(j&&j.erro||r.status);
+    if(j){S=j;sync('ok','Ligado · última alteração '+(j.atualizadoEm?new Date(j.atualizadoEm).toLocaleString('pt-PT'):'—'));}
+    else{S=local||JSON.parse(JSON.stringify(DEFAULT));guardar();}
+  }catch(e){S=local||JSON.parse(JSON.stringify(DEFAULT));sync('err','Sem ligação à nuvem: as alterações ficam só neste aparelho ('+e.message+')');}
+  if(!S.feitos)S.feitos={};
+}
+async function carregarRegistos(){
+  try{var r=await fetch(SHEETDB);var d=await r.json();
+    if(Array.isArray(d))registos=d.map(function(x){var v={};try{v=typeof x.valores==='string'?JSON.parse(x.valores||'{}'):(x.valores||{});}catch(e){}
+      return{nome:x.nome,loja:LAGOS_NOMES.indexOf(String(x.nome||'').toLowerCase())>=0?'Lagos':(x.loja||'Silves'),data:String(x.data||'').slice(0,10),v:v,total:pn(x.total)};});
+  }catch(e){}
+}
+async function carregarMoloni(m,fresco){
+  try{var r=await fetch(API+'/moloni?mes='+m+(fresco?'&fresco=1':''));var j=await r.json();if(r.ok&&j.lojas)moloni[m]=j;}catch(e){}
+}
+
+// ---------- métricas ----------
+function metricas(m){
+  var regs=registos.filter(function(r){return r.data.slice(0,7)===m;});
+  var mol=moloni[m];
+  var p=m.split('-').map(Number);var diasMes=new Date(Date.UTC(p[0],p[1],0)).getUTCDate();
+  var dia=HOJE.slice(0,7)===m?+HOJE.slice(8,10):(m<HOJE.slice(0,7)?diasMes:0);
+  var metas=(S.metas||{})[m]||{};
+  var out={dia:dia,diasMes:diasMes,lojas:{}};
+  ['Lagos','Silves'].forEach(function(l){
+    var rl=regs.filter(function(r){return r.loja===l;});
+    var regLoja=rl.reduce(function(s,r){return s+(r.v.loja!=null?pn(r.v.loja):(CANAIS.some(function(c){return r.v[c];})?0:r.total));},0);
+    var mm=mol&&mol.lojas[l];
+    out.lojas[l]={vendido:mm?mm.vendido:regLoja,fonte:mm?'Moloni':'registos da equipa',taloes:mm?mm.taloes:null,
+      contactos:rl.reduce(function(s,r){return s+pn(r.v.contactos);},0),meta:metas[l]||null};
+    out.lojas[l].ticket=out.lojas[l].taloes?out.lojas[l].vendido/out.lojas[l].taloes:null;
+  });
+  var canais={};CANAIS.forEach(function(c){canais[c]=regs.reduce(function(s,r){return s+pn(r.v[c]);},0);});
+  var livesN=new Set(regs.filter(function(r){return pn(r.v.lives)>0;}).map(function(r){return r.data;})).size;
+  out.lojas.Online={vendido:CANAIS.reduce(function(s,c){return s+canais[c];},0),fonte:'registos da equipa',canais:canais,lives:livesN,vendasLive:livesN?canais.lives/livesN:null,meta:metas.Online||null};
+  var tot=['Lagos','Silves','Online'];
+  out.lojas.Total={vendido:tot.reduce(function(s,l){return s+out.lojas[l].vendido;},0),meta:tot.every(function(l){return out.lojas[l].meta;})?tot.reduce(function(s,l){return s+out.lojas[l].meta;},0):null};
+  Object.keys(out.lojas).forEach(function(k){var o=out.lojas[k];
+    if(o.meta&&dia){o.pct=o.vendido/o.meta;o.esperado=o.meta*dia/diasMes;o.falta=Math.max(0,o.meta-o.vendido);o.faltaDia=dia<diasMes?o.falta/(diasMes-dia):null;var r=o.vendido/o.esperado;o.estado=r>=1?'verde':r>=.9?'amarelo':'vermelho';}
+    else o.estado='';});
+  return out;
+}
+function autoValor(k,frente,M){
+  var o=M.lojas[frente];if(!o)return null;
+  if(k==='vendas')return eur(o.vendido)+(o.meta?' · '+Math.round(o.pct*100)+'%':'');
+  if(k==='taloes')return o.taloes==null?'—':o.taloes+(M.dia?' · '+(o.taloes/M.dia).toFixed(1).replace('.',',')+'/dia':'');
+  if(k==='ticket')return o.ticket==null?'—':eur(o.ticket);
+  if(k==='contactos')return String(o.contactos);
+  if(k==='lives')return String(o.lives);
+  if(k==='vendas_live')return o.vendasLive==null?'—':eur(o.vendasLive);
+  return null;
+}
+var AUTO_NOMES={'':'Manual',vendas:'Vendas do mês',taloes:'Talões (Moloni)',ticket:'Ticket médio',contactos:'Contactos Tribo',lives:'Número de Lives',vendas_live:'Vendas por Live'};
+
+// ---------- desenhar ----------
+function renderTabs(){
+  var t=['Resumo'].concat(S.frentes.map(function(f){return f.id;})).concat(['Decisões']);
+  var nomes={Resumo:'Resumo','Decisões':'Decisões'};S.frentes.forEach(function(f){nomes[f.id]=f.nome;});
+  var box=document.getElementById('tabs');box.innerHTML='';
+  t.forEach(function(id){var b=document.createElement('button');b.className='tab'+(id===tab?' active':'');b.textContent=nomes[id];b.onclick=function(){tab=id;try{history.replaceState(null,'','#'+encodeURIComponent(id));}catch(e){}render();};box.appendChild(b);});
+}
+function renderMeses(){
+  var ms=new Set(Object.keys(S.metas||{}));ms.add(HOJE.slice(0,7));
+  var d=new Date(HOJE+'T12:00:00Z');d.setUTCMonth(d.getUTCMonth()-1);ms.add(d.toISOString().slice(0,7));
+  var sel=document.getElementById('mes');sel.innerHTML='';
+  Array.from(ms).sort().forEach(function(m){var o=document.createElement('option');o.value=m;o.textContent=cap(nomeMes(m));sel.appendChild(o);});
+  sel.value=mes;
+}
+function tileHTML(nome,cor,o,M){
+  var est={verde:'À frente',amarelo:'Quase lá',vermelho:'Atrás'}[o.estado]||(o.meta?'':'Sem meta');
+  var h='<div class="tile" style="--c:'+cor+'"><div class="tile-head"><div class="tile-name"><span class="sem '+o.estado+'"></span>'+esc(nome)+'</div>'+(est?'<span class="chip '+o.estado+'">'+est+'</span>':'')+'</div>';
+  h+='<div class="big">'+eur(o.vendido)+'</div>';
+  if(o.meta){
+    h+='<div class="track"><div class="fill" style="width:'+Math.min(100,o.pct*100)+'%;background:'+(o.estado==='verde'?'var(--ok)':o.estado==='amarelo'?'var(--warn)':'var(--bad)')+'"></div>'+(M.dia?'<div class="pace" style="left:calc('+Math.min(100,M.dia/M.diasMes*100)+'% - 1px)" title="Onde devia estar hoje"></div>':'')+'</div>';
+    h+='<div class="sub">'+Math.round(o.pct*100)+'% de '+eur(o.meta)+' · devia ir em '+eur(o.esperado)+'</div>';
+    h+='<div class="sub">'+(o.falta<=0?'<span class="feito">Meta cumprida ✓</span>':o.faltaDia?'Faltam '+eur(o.falta)+' · <b style="color:var(--cream)">'+eur(o.faltaDia)+'/dia</b>':'Faltaram '+eur(o.falta))+'</div>';
+  } else h+='<div class="sub">Sem meta para '+nomeMes(mes)+(editing?'':'. Carrega em ✏️ Editar para a definir.')+'</div>';
+  var c=[];
+  if(o.taloes!=null)c.push(o.taloes+' talões');if(o.ticket)c.push('ticket '+eur(o.ticket));if(o.contactos!=null)c.push(o.contactos+' contactos');if(o.lives!=null)c.push(o.lives+' Lives');if(o.fonte)c.push('fonte: '+o.fonte);
+  if(c.length)h+='<div class="chips">'+c.map(function(x){return '<span class="chip">'+esc(x)+'</span>';}).join('')+'</div>';
+  return h+'</div>';
+}
+function contagemTarefas(f){var tot=0,feitas=0;f.tarefas.forEach(function(t){tot++;if(S.feitos[t.id+'|'+periodo(t.freq)])feitas++;});return {tot:tot,feitas:feitas};}
+
+function renderResumo(M){
+  var v='';
+  var t=M.lojas.Total;
+  var lojas=['Lagos','Silves','Online'];
+  var atras=lojas.filter(function(l){return M.lojas[l].estado==='vermelho';});
+  var frase=!M.dia?'Este mês ainda não começou.':!t.meta?'Ainda não há metas para '+nomeMes(mes)+': vês o que já se vendeu, sem ritmo.':atras.length?'Atenção a '+atras.map(function(l){return l==='Online'?'online':l;}).join(' e ')+': está abaixo do ritmo da meta.':'Todas as frentes vão no ritmo ou à frente. 🔥';
+  v+='<div class="card gold"><div class="sec">'+cap(nomeMes(mes))+' · dia '+M.dia+' de '+M.diasMes+'</div><div class="note" style="margin-bottom:0">'+esc(frase)+'</div></div>';
+  v+='<div class="grid">'+tileHTML('Total Raja Pura','var(--gold)',t,M)+tileHTML('Lagos','var(--lagos)',M.lojas.Lagos,M)+tileHTML('Silves','var(--silves-light)',M.lojas.Silves,M)+tileHTML('Online','var(--online)',M.lojas.Online,M)+'</div>';
+  // canais online
+  var cn=M.lojas.Online.canais,mx=Math.max(1,Math.max.apply(null,CANAIS.map(function(c){return cn[c];})));
+  var lab={shopify:'Shopify',etsy:'Etsy',lives:'Lives',instagram:'Instagram',whatsapp:'WhatsApp'};
+  v+='<div class="card"><div class="sec">Online por canal</div><div class="note">O que a equipa registou em '+nomeMes(mes)+'.</div>';
+  CANAIS.forEach(function(c){v+='<div class="row" style="margin-bottom:8px"><span style="width:90px;font-size:13px">'+lab[c]+'</span><div class="track" style="flex:1;margin:0"><div class="fill" style="width:'+(cn[c]/mx*100)+'%;background:var(--online)"></div></div><span style="width:80px;text-align:right;font-variant-numeric:tabular-nums">'+eur(cn[c])+'</span></div>';});
+  v+='</div>';
+  // tarefas
+  v+='<div class="card"><div class="sec">Tarefas desta semana</div><div class="note">Quanto já está feito em cada frente (diárias contam o dia de hoje).</div><div class="tw"><table><thead><tr><th>Frente</th><th>Responsável</th><th class="num">Feitas</th></tr></thead><tbody>';
+  S.frentes.forEach(function(f){var c=contagemTarefas(f);v+='<tr><td>'+esc(f.nome)+'</td><td>'+esc(f.equipa)+'</td><td class="num">'+c.feitas+' / '+c.tot+'</td></tr>';});
+  v+='</tbody></table></div></div>';
+  // metas do trimestre
+  var ms=Object.keys(S.metas||{}).sort();
+  v+='<div class="card"><div class="sec">Metas por mês</div><div class="note">'+(editing?'Muda os valores aqui. Guardam sozinhos.':'Em ✏️ Editar podes mudar qualquer meta.')+'</div><div class="tw"><table><thead><tr><th>Mês</th><th class="num">Lagos</th><th class="num">Silves</th><th class="num">Online</th><th class="num">Total</th>'+(editing?'<th></th>':'')+'</tr></thead><tbody>';
+  ms.forEach(function(m){var o=S.metas[m];
+    if(editing)v+='<tr><td>'+cap(nomeMes(m))+'</td>'+['Lagos','Silves','Online'].map(function(l){return '<td class="num"><input class="edit-in num" type="number" min="0" step="50" data-meta="'+m+'|'+l+'" value="'+(o[l]==null?'':o[l])+'"></td>';}).join('')+'<td class="num">'+eur((o.Lagos||0)+(o.Silves||0)+(o.Online||0))+'</td><td><button class="del" data-delmes="'+m+'" title="Apagar mês">×</button></td></tr>';
+    else v+='<tr><td>'+cap(nomeMes(m))+'</td><td class="num">'+eur(o.Lagos)+'</td><td class="num">'+eur(o.Silves)+'</td><td class="num">'+eur(o.Online)+'</td><td class="num"><b>'+eur((o.Lagos||0)+(o.Silves||0)+(o.Online||0))+'</b></td></tr>';});
+  v+='</tbody></table></div>'+(editing?'<div class="row" style="margin-top:8px"><input class="edit-in" type="month" id="novoMes" style="max-width:180px"><button class="add" id="addMes">+ Juntar mês</button></div>':'')+'</div>';
+  // foco
+  v+='<div class="card"><div class="sec">Foco do trimestre</div>'+(editing?'<input class="edit-in" data-campo="periodo" value="'+esc(S.periodo)+'" style="margin-bottom:8px"><textarea class="edit-in" data-campo="foco">'+esc(S.foco)+'</textarea>':'<div class="obj">'+esc(S.foco)+'</div>')+'</div>';
+  return v;
+}
+
+function renderFrente(f,M){
+  var v='<div class="card gold"><div class="note" style="margin-bottom:6px;text-transform:uppercase;letter-spacing:2px;font-size:10px">Objetivo</div>';
+  if(editing)v+='<textarea class="edit-in" data-f="'+f.id+'" data-k="objetivo">'+esc(f.objetivo)+'</textarea><input class="edit-in" style="margin-top:8px" data-f="'+f.id+'" data-k="equipa" value="'+esc(f.equipa)+'" placeholder="Equipa"><input class="edit-in" style="margin-top:8px" data-f="'+f.id+'" data-k="nome" value="'+esc(f.nome)+'" placeholder="Nome do separador">';
+  else v+='<div class="obj">'+esc(f.objetivo)+'</div><div class="who">'+esc(f.equipa)+'</div>';
+  v+='</div>';
+  if(M.lojas[f.id])v+='<div class="grid">'+tileHTML(f.id==='Online'?'Online':f.nome,f.cor,M.lojas[f.id],M)+'</div>';
+  // KPIs
+  v+='<div class="card"><div class="sec">KPIs</div><div class="note">Os marcados <span class="auto">auto</span> calculam-se sozinhos para '+nomeMes(mes)+'; os outros atualizas tu.</div><div class="tw"><table><thead><tr><th>KPI</th><th>Hoje</th><th>Meta</th><th>Quando se vê</th>'+(editing?'<th>Cálculo</th><th></th>':'')+'</tr></thead><tbody>';
+  f.kpis.forEach(function(k,i){
+    var av=k.auto?autoValor(k.auto,f.id,M):null;
+    if(editing){
+      var lb=function(t){return '<span class="kl">'+t+'</span>';};
+      v+='<tr><td colspan="6"><div class="kedit"><div class="row">'+'<input class="edit-in" data-f="'+f.id+'" data-kpi="'+i+'" data-k="nome" value="'+esc(k.nome)+'"><button class="del" data-delkpi="'+f.id+'|'+i+'" title="Apagar">×</button></div><div class="kgrid"><label>'+lb('Hoje')+(k.auto?'<span style="color:var(--muted);padding:7px 0;display:block">'+esc(av||'—')+'</span>':'<input class="edit-in" data-f="'+f.id+'" data-kpi="'+i+'" data-k="atual" value="'+esc(k.atual)+'">')+'</label><label>'+lb('Meta')+'<input class="edit-in" data-f="'+f.id+'" data-kpi="'+i+'" data-k="meta" value="'+esc(k.meta)+'"></label><label>'+lb('Quando se vê')+'<input class="edit-in" data-f="'+f.id+'" data-kpi="'+i+'" data-k="quando" value="'+esc(k.quando)+'"></label><label>'+lb('Cálculo')+'<select class="edit-in" data-f="'+f.id+'" data-kpi="'+i+'" data-k="auto">'+Object.keys(AUTO_NOMES).map(function(a){return '<option value="'+a+'"'+(a===k.auto?' selected':'')+'>'+AUTO_NOMES[a]+'</option>';}).join('')+'</select></label></div></div></td></tr>';
+    } else v+='<tr><td>'+esc(k.nome)+(k.auto?'<span class="auto">auto</span>':'')+'</td><td>'+esc(av!=null?av:(k.atual||'—'))+'</td><td>'+esc(k.meta)+'</td><td style="color:var(--muted)">'+esc(k.quando)+'</td></tr>';
+  });
+  v+='</tbody></table></div>'+(editing?'<button class="add" data-addkpi="'+f.id+'">+ Juntar KPI</button>':'')+'</div>';
+  // Tarefas
+  var grupos=[['dia','Todos os dias','hoje'],['semana','Todas as semanas','esta semana'],['mes','Todos os meses','este mês']];
+  v+='<div class="card"><div class="sec">Tarefas</div><div class="note">Marca o que está feito. As diárias recomeçam cada dia, as semanais à segunda e as mensais no dia 1.</div>';
+  grupos.forEach(function(g){
+    var ts=f.tarefas.filter(function(t){return (t.freq||'semana')===g[0];});
+    if(!ts.length&&!editing)return;
+    var feitas=ts.filter(function(t){return S.feitos[t.id+'|'+periodo(t.freq)];}).length;
+    v+='<div class="task-group"><h4><span>'+g[1]+'</span><span class="prog">'+feitas+'/'+ts.length+' '+g[2]+'</span></h4>';
+    ts.forEach(function(t){
+      var key=t.id+'|'+periodo(t.freq),done=!!S.feitos[key];
+      if(editing)v+='<div class="task"><input class="edit-in" style="flex:1 1 100%" data-f="'+f.id+'" data-task="'+t.id+'" data-k="texto" value="'+esc(t.texto)+'"><input class="edit-in" style="flex:1;min-width:0" data-f="'+f.id+'" data-task="'+t.id+'" data-k="quem" value="'+esc(t.quem)+'" placeholder="Quem"><select class="edit-in" style="max-width:110px" data-f="'+f.id+'" data-task="'+t.id+'" data-k="freq"><option value="dia"'+(t.freq==='dia'?' selected':'')+'>Diária</option><option value="semana"'+(t.freq==='semana'?' selected':'')+'>Semanal</option><option value="mes"'+(t.freq==='mes'?' selected':'')+'>Mensal</option></select><button class="del" data-deltask="'+f.id+'|'+t.id+'" title="Apagar">×</button></div>';
+      else v+='<label class="task'+(done?' done':'')+'"><input type="checkbox" data-feito="'+key+'"'+(done?' checked':'')+'><span class="t">'+esc(t.texto)+'</span><span class="quem">'+esc(t.quem)+'</span></label>';
+    });
+    if(editing)v+='<button class="add" data-addtask="'+f.id+'|'+g[0]+'">+ Juntar tarefa '+g[1].toLowerCase().replace('todos os ','').replace('todas as ','')+'</button>';
+    v+='</div>';
+  });
+  return v+'</div>';
+}
+
+function renderDecisoes(){
+  var v='<div class="card"><div class="sec">Decisões em aberto</div><div class="note">O que ainda falta decidir.</div>';
+  S.decisoes.forEach(function(d,i){
+    if(editing)v+='<div class="row" style="margin-bottom:6px"><textarea class="edit-in" data-dec="'+i+'">'+esc(d.texto)+'</textarea><button class="del" data-deldec="'+i+'">×</button></div>';
+    else v+='<div class="dec">'+esc(d.texto)+'</div>';
+  });
+  if(editing)v+='<button class="add" id="addDec">+ Juntar decisão</button>';
+  return v+'</div>';
+}
+
+function render(){
+  renderTabs();renderMeses();
+  document.getElementById('periodo').textContent=S.periodo||'';
+  document.getElementById('editar').classList.toggle('on',editing);
+  document.getElementById('editar').textContent=editing?'✓ Terminar edição':'✏️ Editar';
+  var M=metricas(mes);var v;
+  if(tab==='Resumo')v=renderResumo(M);
+  else if(tab==='Decisões')v=renderDecisoes();
+  else{var f=S.frentes.find(function(x){return x.id===tab;});v=f?renderFrente(f,M):renderResumo(M);}
+  document.getElementById('view').innerHTML=v;
+}
+
+// ---------- interações ----------
+document.getElementById('editar').onclick=function(){editing=!editing;render();};
+document.getElementById('mes').onchange=async function(e){mes=e.target.value;render();if(!moloni[mes]){await carregarMoloni(mes);render();}};
+var view=document.getElementById('view');
+view.addEventListener('change',function(e){
+  var el=e.target,d=el.dataset;
+  if(d.feito){if(el.checked)S.feitos[d.feito]=new Date().toISOString();else delete S.feitos[d.feito];guardar();render();return;}
+  if(d.meta){var p=d.meta.split('|');S.metas[p[0]][p[1]]=el.value===''?null:Number(el.value);guardar();return;}
+  if(d.campo){S[d.campo]=el.value;guardar();return;}
+  if(d.dec!=null){S.decisoes[+d.dec].texto=el.value;guardar();return;}
+  if(d.f){var f=S.frentes.find(function(x){return x.id===d.f;});
+    if(d.kpi!=null){f.kpis[+d.kpi][d.k]=el.value;guardar();if(d.k==='auto')render();return;}
+    if(d.task){var t=f.tarefas.find(function(x){return x.id===d.task;});t[d.k]=el.value;guardar();if(d.k==='freq')render();return;}
+    f[d.k]=el.value;guardar();if(d.k==='nome')renderTabs();return;}
+});
+view.addEventListener('click',function(e){
+  var el=e.target.closest('button');if(!el)return;var d=el.dataset;
+  if(d.addkpi){S.frentes.find(function(x){return x.id===d.addkpi;}).kpis.push(K('Novo KPI','','','Semanal'));guardar();render();}
+  else if(d.delkpi){var p=d.delkpi.split('|');S.frentes.find(function(x){return x.id===p[0];}).kpis.splice(+p[1],1);guardar();render();}
+  else if(d.addtask){var q=d.addtask.split('|');S.frentes.find(function(x){return x.id===q[0];}).tarefas.push(T('Nova tarefa','',q[1]));guardar();render();}
+  else if(d.deltask){var r=d.deltask.split('|');var f=S.frentes.find(function(x){return x.id===r[0];});f.tarefas=f.tarefas.filter(function(t){return t.id!==r[1];});guardar();render();}
+  else if(d.deldec!=null){S.decisoes.splice(+d.deldec,1);guardar();render();}
+  else if(el.id==='addDec'){S.decisoes.push({id:uid(),texto:''});guardar();render();}
+  else if(d.delmes){delete S.metas[d.delmes];guardar();render();}
+  else if(el.id==='addMes'){var m=document.getElementById('novoMes').value;if(/^\d{4}-\d{2}$/.test(m)&&!S.metas[m]){S.metas[m]={Lagos:null,Silves:null,Online:null};guardar();render();}}
+});
+
+(async function(){
+  var h=decodeURIComponent(location.hash.slice(1));if(h)tab=h;
+  await carregar();render();
+  await Promise.all([carregarRegistos(),carregarMoloni(mes)]);render();
+  setInterval(async function(){if(editing)return;await Promise.all([carregarRegistos(),carregarMoloni(mes,false)]);render();},5*60*1000);
+})();
+</script>
+</body>
+</html>
