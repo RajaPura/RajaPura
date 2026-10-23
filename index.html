@@ -33,6 +33,7 @@ body{background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif;mi
 .kpi-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
 .kpi-value{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;margin-bottom:4px;}
 .kpi-sub{font-size:11px;color:var(--muted);}
+.loja-row{padding:14px 0;border-top:1px solid var(--surface3);}.loja-row:first-of-type{border-top:0;padding-top:4px;}.loja-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;}.loja-nome{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--cream);display:flex;align-items:center;gap:8px;}.sem{width:12px;height:12px;border-radius:50%;display:inline-block;flex:none;}.sem.verde{background:#6BC28F;box-shadow:0 0 8px rgba(107,194,143,.6);}.sem.amarelo{background:#E5B05A;box-shadow:0 0 8px rgba(229,176,90,.6);}.sem.vermelho{background:#E07050;box-shadow:0 0 8px rgba(224,112,80,.6);}.loja-pct{font-family:'Cormorant Garamond',serif;font-size:22px;}.loja-sub{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;margin-top:6px;font-size:12px;color:var(--muted);}.loja-kpis{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}.loja-kpis span{font-size:11px;border:1px solid var(--surface3);border-radius:99px;padding:3px 10px;color:var(--cream);}.ritmo-mark{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--cream);opacity:.7;}
 .meta-card{background:var(--surface);border-radius:14px;padding:22px 24px;border:1px solid var(--gold-dim);margin-bottom:20px;}
 .progress-track{background:var(--surface3);border-radius:99px;height:8px;overflow:hidden;}
 .progress-fill{height:100%;border-radius:99px;transition:width .8s;}
@@ -166,6 +167,13 @@ tfoot td{border-top:1px solid var(--gold-dim);border-bottom:none;font-weight:600
       <div class="kpi" style="border-color:rgba(200,145,58,.15)"><div class="kpi-label">Lagos</div><div class="kpi-value" id="kpiLagos" style="color:var(--lagos)">€0,00</div><div class="kpi-sub">Este mês</div></div>
       <div class="kpi" style="border-color:rgba(110,158,96,.2)"><div class="kpi-label">Silves</div><div class="kpi-value" id="kpiSilves" style="color:var(--silves-light)">€0,00</div><div class="kpi-sub">Este mês</div></div>
     </div>
+    <div id="lojasCard" class="meta-card" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--cream)">Metas por loja</div>
+        <div style="font-size:11px;color:var(--muted)" id="lojasLegenda">🟢 à frente do ritmo · 🟡 até 10% atrás · 🔴 mais de 10% atrás</div>
+      </div>
+      <div id="lojasRows"></div>
+    </div>
     <div id="metaCard" class="meta-card" style="display:none">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
         <div style="font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--cream)">Progresso para a Meta</div>
@@ -240,7 +248,11 @@ tfoot td{border-top:1px solid var(--gold-dim);border-bottom:none;font-weight:600
 <div id="metaModal" class="modal-overlay" style="display:none" onclick="if(event.target.id=='metaModal')document.getElementById('metaModal').style.display='none'">
   <div class="modal" style="border-color:var(--gold-dim);max-width:340px">
     <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--cream);margin-bottom:8px">Meta Mensal</div>
-    <input class="form-input" id="metaModalInput" type="number" placeholder="Ex: 28800" style="margin-bottom:16px"/>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px" id="metaModalMes"></div>
+    <label class="form-label">Lagos (loja)</label><input class="form-input" id="metaLagos" type="number" placeholder="Ex: 7500" style="margin-bottom:10px"/>
+    <label class="form-label">Silves (loja)</label><input class="form-input" id="metaSilves" type="number" placeholder="Ex: 2600" style="margin-bottom:10px"/>
+    <label class="form-label">Online (Shopify, Instagram, WhatsApp, Etsy, Lives)</label><input class="form-input" id="metaOnline" type="number" placeholder="Ex: 2500" style="margin-bottom:10px"/>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Total da equipa: <b id="metaModalTotal" style="color:var(--gold)">€0</b></div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="document.getElementById('metaModal').style.display='none'">Cancelar</button>
       <button class="btn-save" style="background:var(--gold)" onclick="saveMetaModal()">Guardar</button>
@@ -267,6 +279,18 @@ var COLABORADORES = {
   'Leonor':{loja:'Silves',turno:'Noites FDS',color:'#7AAAD5',emoji:'👩',campos:['loja']},
   'Joana':{loja:'Silves',turno:'Loja',color:'#D4A373',emoji:'👩',campos:['loja']}
 };
+// Metas mensais por loja (OKRs nov 2026 – jan 2027). Online = Shopify + Instagram + WhatsApp + Etsy + Lives.
+var METAS = {
+  '2026-11':{Lagos:7500,Silves:2600,Online:2500},
+  '2026-12':{Lagos:9500,Silves:2600,Online:3500},
+  '2027-01':{Lagos:6600,Silves:1800,Online:2500}
+};
+var CANAIS_ONLINE = ['shopify','instagram','whatsapp','etsy','lives'];
+function getMetas(mes){
+  try{var o=JSON.parse(localStorage.getItem('rp_metas_'+mes)||'null');if(o&&(o.Lagos||o.Silves||o.Online))return o;}catch(e){}
+  return METAS[mes]||null;
+}
+function syncMeta(){var ms=getMetas(mesAtual());if(ms)meta=(ms.Lagos||0)+(ms.Silves||0)+(ms.Online||0);}
 var CAMPOS_SPLIT = {loja:true}; // canais com Dinheiro / Multibanco separados
 var CAMPO_LABELS = {loja:'Vendas Loja',shopify:'Shopify',instagram:'Instagram/Facebook',whatsapp:'WhatsApp',etsy:'Etsy',lives:'Lives'};
 
@@ -294,7 +318,7 @@ window.onload=function(){
   try{limpezas=JSON.parse(localStorage.getItem('rp_limpezas3')||'[]');}catch(e){limpezas=[];}
   meta=Number(localStorage.getItem('rp_meta')||0);
   document.getElementById('modalData').value=todayStr();
-  updateMetaBtn();
+  syncMeta();updateMetaBtn();
   setConnStatus('loading','A ligar ao Google Sheets...');
   fetchRegistos();
   fetchFechos();
@@ -487,6 +511,7 @@ function switchTab(tab,btn){
 
 // DASHBOARD
 function renderDashboard(){
+  syncMeta();
   var today=todayStr(),mes=mesAtual();
   var rm=registos.filter(function(r){return r.data&&r.data.substring(0,7)===mes;});
   var tH=rm.filter(function(r){return r.data===today;}).reduce(function(s,r){return s+parseNum(r.total);},0);
@@ -510,6 +535,7 @@ function renderDashboard(){
     document.getElementById('metaVal').textContent='Meta: '+fmt(meta);
     document.getElementById('metaMiss').textContent=meta-tM>0?'Faltam '+fmt(meta-tM)+' para a meta':'🎉 Meta atingida!';
   }else{mc.style.display='none';}
+  renderLojas(rm,mes);
   var maxH=Math.max(tH,1);
   document.getElementById('todayCollabs').innerHTML=Object.keys(COLABORADORES).map(function(nome){
     var col=COLABORADORES[nome];
@@ -600,6 +626,41 @@ function renderTabela(){
   container.innerHTML=html;
 }
 
+// METAS POR LOJA
+function renderLojas(rm,mes){
+  var card=document.getElementById('lojasCard'),ms=getMetas(mes);
+  if(!ms){card.style.display='none';return;}
+  card.style.display='';
+  var y=+mes.split('-')[0],m=+mes.split('-')[1];
+  var dias=new Date(y,m,0).getDate(),hoje=new Date(),dia=(hoje.getFullYear()===y&&hoje.getMonth()+1===m)?hoje.getDate():dias;
+  var frac=dia/dias;
+  function lojaDe(r){return (COLABORADORES[r.nome]&&COLABORADORES[r.nome].loja)||r.loja;}
+  var lojas=[
+    {k:'Lagos',cor:'var(--lagos)',regs:rm.filter(function(r){return lojaDe(r)==='Lagos';}),val:function(r){return parseNum(r.valores&&r.valores.loja!=null?r.valores.loja:(CANAIS_ONLINE.some(function(c){return r.valores&&r.valores[c];})?0:r.total));}},
+    {k:'Silves',cor:'var(--silves-light)',regs:rm.filter(function(r){return lojaDe(r)==='Silves';}),val:function(r){return parseNum(r.valores&&r.valores.loja!=null?r.valores.loja:(CANAIS_ONLINE.some(function(c){return r.valores&&r.valores[c];})?0:r.total));}},
+    {k:'Online',cor:'#7AAAD5',regs:rm,val:function(r){return CANAIS_ONLINE.reduce(function(s,c){return s+parseNum(r.valores&&r.valores[c]);},0);}}
+  ];
+  document.getElementById('lojasRows').innerHTML=lojas.map(function(L){
+    var alvo=ms[L.k]||0;if(!alvo)return '';
+    var feito=L.regs.reduce(function(s,r){return s+L.val(r);},0);
+    var ritmo=alvo*frac,vsRitmo=ritmo>0?feito/ritmo:0;
+    var sem=vsRitmo>=1?'verde':vsRitmo>=0.9?'amarelo':'vermelho';
+    var p=Math.min(100,Math.round(feito/alvo*100));
+    var falta=Math.max(0,alvo-feito),diasRest=Math.max(1,dias-dia+(dia<dias?0:1));
+    var kp='';
+    if(L.k!=='Online'){
+      var tal=L.regs.reduce(function(s,r){return s+parseNum(r.valores&&r.valores.taloes);},0);
+      var con=L.regs.reduce(function(s,r){return s+parseNum(r.valores&&r.valores.contactos);},0);
+      var vendTal=L.regs.filter(function(r){return parseNum(r.valores&&r.valores.taloes)>0;}).reduce(function(s,r){return s+L.val(r);},0);
+      kp='<div class="loja-kpis"><span>🧾 '+(tal||'—')+' talões</span><span>💶 '+(tal?fmt(vendTal/tal)+' por talão':'ticket médio —')+'</span><span>💌 '+con+' contactos'+(tal?' · '+Math.round(con/tal*100)+'% dos talões':'')+'</span></div>';
+    }
+    return '<div class="loja-row"><div class="loja-head"><div class="loja-nome"><span class="sem '+sem+'" title="'+sem+'"></span>'+L.k+'</div>'+
+      '<div class="loja-pct" style="color:'+L.cor+'">'+p+'%</div></div>'+
+      '<div class="progress-track" style="position:relative"><div class="progress-fill" style="width:'+p+'%;background:'+L.cor+'"></div><div class="ritmo-mark" style="left:'+Math.min(100,frac*100).toFixed(1)+'%" title="Onde devia estar hoje"></div></div>'+
+      '<div class="loja-sub"><span>'+fmt(feito)+' de '+fmt(alvo)+'</span><span>Hoje devia ir em '+fmt(ritmo)+'</span><span>'+(falta>0?'Faltam '+fmt(falta)+' · '+fmt(falta/diasRest)+'/dia':'🎉 Meta atingida!')+'</span></div>'+kp+'</div>';
+  }).join('');
+}
+
 // MODAL VENDAS
 function openModal(nome){
   currentCollab=nome;var col=COLABORADORES[nome];
@@ -617,7 +678,7 @@ function openModal(nome){
       return '<div class="form-group"><label class="form-label">'+CAMPO_LABELS[c]+'</label><div style="display:flex;gap:10px"><div style="flex:1"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">💶 Dinheiro</div>'+inp('campo_'+c+'_dinheiro','0,00')+'</div><div style="flex:1"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">💳 Multibanco</div>'+inp('campo_'+c+'_multibanco','0,00')+'</div></div></div>';
     }
     return '<div class="form-group"><label class="form-label">'+CAMPO_LABELS[c]+'</label>'+inp('campo_'+c,'0,00')+'</div>';
-  }).join('');
+  }).join('')+(col.campos.indexOf('loja')>=0?'<div class="form-group"><label class="form-label">Loja: talões e contactos de hoje</label><div style="display:flex;gap:10px"><div style="flex:1"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">🧾 Nº de talões</div><input class="form-input" type="number" min="0" step="1" inputmode="numeric" id="campo_taloes" placeholder="0"></div><div style="flex:1"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">💌 Contactos para a Tribo</div><input class="form-input" type="number" min="0" step="1" inputmode="numeric" id="campo_contactos" placeholder="0"></div></div></div>':'');
   updateTotal();
   document.getElementById('registoModal').style.display='flex';
 }
@@ -645,6 +706,7 @@ async function guardarRegisto(){
   var col=COLABORADORES[currentCollab],valores={};
   valores=lerCampos(col);
   var total=col.campos.reduce(function(s,c){return s+Number(valores[c]||0);},0);
+  if(document.getElementById('campo_taloes')){valores.taloes=Math.round(numEl('campo_taloes'));valores.contactos=Math.round(numEl('campo_contactos'));}
   var registo={id:String(Date.now()),nome:currentCollab,loja:col.loja,data:document.getElementById('modalData').value,valores:valores,total:total};
   var btn=document.getElementById('btnSave');
   btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;
@@ -655,8 +717,19 @@ async function guardarRegisto(){
   btn.innerHTML='Guardar';btn.disabled=false;
 }
 
-function openMetaModal(){document.getElementById('metaModalInput').value=meta||'';document.getElementById('metaModal').style.display='flex';}
-function saveMetaModal(){meta=Number(document.getElementById('metaModalInput').value||0);localStorage.setItem('rp_meta',meta);updateMetaBtn();document.getElementById('metaModal').style.display='none';renderDashboard();}
+function openMetaModal(){
+  var mes=mesAtual(),ms=getMetas(mes)||{};
+  document.getElementById('metaModalMes').textContent='Metas de '+MESES[+mes.split('-')[1]-1]+' '+mes.split('-')[0];
+  ['Lagos','Silves','Online'].forEach(function(k){var el=document.getElementById('meta'+k);el.value=ms[k]||'';el.oninput=metaModalTotal;});
+  metaModalTotal();document.getElementById('metaModal').style.display='flex';
+}
+function metaModalTotal(){var t=['Lagos','Silves','Online'].reduce(function(s,k){return s+numEl('meta'+k);},0);document.getElementById('metaModalTotal').textContent=fmt(t);}
+function saveMetaModal(){
+  var o={Lagos:numEl('metaLagos'),Silves:numEl('metaSilves'),Online:numEl('metaOnline')};
+  localStorage.setItem('rp_metas_'+mesAtual(),JSON.stringify(o));
+  meta=o.Lagos+o.Silves+o.Online;localStorage.setItem('rp_meta',meta);
+  updateMetaBtn();document.getElementById('metaModal').style.display='none';renderDashboard();
+}
 function updateMetaBtn(){document.getElementById('metaBtnText').textContent=meta>0?'Meta: '+fmt(meta):'⊕ Definir Meta';}
 
 // LIMPEZAS
@@ -783,6 +856,7 @@ function renderLimpHist(){
 
 function renderLimpAval(){
   var c=document.getElementById('avalCards');if(!c)return;
+  syncMeta();
   var mes=todayStr().substring(0,7),mesNome=MESES[parseInt(mes.split('-')[1])-1]+' '+mes.split('-')[0];
   var metaAt=meta>0&&totalGeral()>=meta;
   var hoje=new Date(),diasMes=0;
